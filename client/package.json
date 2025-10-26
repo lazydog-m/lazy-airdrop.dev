@@ -1,6 +1,6 @@
 {
   "homepage": "/dashboard/app",
-  "name": "airdrop_hub",
+  "name": "lazy-airdrop-client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
