@@ -1,15 +1,13 @@
 @echo off
 :: --- Configuration ---
-set "CMD_PATH=C:\Program Files\nodejs\npm.cmd"
+set "ROOT=%~dp0"
+set "CMD_PATH=%ProgramFiles%\nodejs\npm.cmd"
 set "CHROME_PATH=C:\GoogleChromePortable64\App\Chrome-bin\chrome.exe"
 set "TEMP_PROFILE_DIR=C:\GoogleChromePortable64\LazyAirdrop_Chrome"
-set "PROJECT_PATH=C:\Users\lazydog\Documents\app\lazy-airdrop.dev"
 set "CLIENT_PORT=5173"
 set "SERVER_PORT=3000"
-set "PROJECT_URL=http://localhost:5173/dashboard/project/list"
-set "CHROME_FLAGS=--app=data:text/html,^<html^>^</html^>"
-set "APP_DATA_URI=data:text/html,<html></html>"
-set "NIRCMD_PATH=C:\Users\lazydog\Documents\app\lazy-airdrop.dev\server\tools\nircmd-x64\nircmd.exe"
+set "PROJECT_URL=http://localhost:%CLIENT_PORT%/dashboard/project/list"
+set "NIRCMD_PATH=%ROOT%\server\tools\nircmd-x64\nircmd.exe"
 chcp 65001 >nul
 
 @echo off
@@ -31,15 +29,15 @@ if %CHROME_RUNNING%==0 (
 echo.
 echo ✅ Application already started ...
     
-nircmd win activate process /%CHROME_PID%
-nircmd win max process /%CHROME_PID%
+%NIRCMD_PATH% win activate process /%CHROME_PID%
+%NIRCMD_PATH% win max process /%CHROME_PID%
 
 exit
 ) 
 
 
 
-powershell -Command "Start-Process '%CMD_PATH%' -ArgumentList 'run','dev' -WorkingDirectory '%PROJECT_PATH%' -WindowStyle Hidden"
+powershell -Command "Start-Process '%CMD_PATH%' -ArgumentList 'run','dev' -WorkingDirectory '%ROOT%' -WindowStyle Hidden"
 
 echo.
 echo 🔄 Loading application ...
