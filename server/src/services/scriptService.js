@@ -2,12 +2,13 @@ const NotFoundException = require('../exceptions/NotFoundException');
 const ValidationException = require('../exceptions/ValidationException');
 const Joi = require('joi');
 const { Op, Sequelize } = require('sequelize');
-const { Pagination } = require('../enums');
+const { Pagination, StatusCommon, Message } = require('../enums');
 const RestApiException = require('../exceptions/RestApiException');
 const sequelize = require('../configs/dbConnection');
 const config = require('../../playwrightConfig');
 const path = require('path')
 const fs = require('fs');
+const crypto = require('crypto');
 const {
   openProfileTest,
   setBrowserTest,
@@ -15,71 +16,79 @@ const {
   setIsStop,
   reConnectBrowser,
   delay,
-  getValidPages
+  getValidPages,
+  activeChrome,
 } = require('../utils/playwrightUtil');
 const { getSocket } = require('../configs/socket');
+const { removeScript, getScripts, modifieScript } = require('../../scripts');
+const { getProjectIdByName, getProjectNameById } = require('./projectService');
 
 const scriptSchema = Joi.object({
-  fileName: Joi.string().trim()
-    .pattern(/^[a-z0-9]+(?:_[a-z0-9]+)*$/) // chỉ snake_case
+  name: Joi.string().trim()
     .required()
-    .max(50)
+    .max(255)
     .messages({
       'string.base': 'Tên script phải là chuỗi',
       'string.empty': 'Tên script không được bỏ trống!',
       'any.required': 'Tên script không được bỏ trống!',
-      'string.max': 'Tên script chỉ đươc phép dài tối đa 50 ký tự!',
-      'string.pattern.base': 'Tên script không hợp lệ!',
+      'string.max': 'Tên script chỉ đươc phép dài tối đa 255 ký tự!',
     }),
-  // password: Joi.string().required().max(255).messages({
-  //   'string.empty': 'Mật khẩu ví không được bỏ trống!',
-  //   'any.required': 'Mật khẩu ví không được bỏ trống!',
-  //   'string.max': 'Mật khẩu ví chỉ đươc phép dài tối đa 255 ký tự!',
-  // }),
-  // status: Joi
-  //   .valid(WalletStatus.UN_ACTIVE, WalletStatus.IN_ACTIVE)
-  //   .messages({
-  //     'any.only': 'Trạng thái ví không hợp lệ!'
-  //   }),
+  description: Joi.string()
+    .trim()
+    .max(10000)
+    .allow('')
+    .messages({
+      'string.base': 'Mô tả phải là chuỗi',
+      'string.max': 'Mô tả chỉ đươc phép dài tối đa 10,000 ký tự!',
+    }),
+});
+
+const statusValidation = Joi.object({
+  status: Joi.required()
+    .valid(StatusCommon.UN_ACTIVE, StatusCommon.IN_ACTIVE)
+    .messages({
+      'any.only': 'Trạng thái không hợp lệ!',
+      'any.required': 'Trạng thái không được bỏ trống!',
+    }),
 });
 
 const getAllScripts = async (req) => {
-  const { page, search } = req.query;
+  const { page, search, selectedStatusItems } = req.query;
 
   const currentPage = Number(page) || 1;
   const offset = (currentPage - 1) * Pagination.limit;
 
-  // Đọc danh sách file .js trong scripts/
-  const files = fs
-    .readdirSync(config.SCRIPT_DIR)
-    .filter(file => file.endsWith(".js"));
+  const scripts = getScripts();
 
-  let fileInfos = files.map(file => {
-    const filePath = path.join(config.SCRIPT_DIR, file);
-    const stats = fs.statSync(filePath);
-    return {
-      fileName: path.basename(file, ".js"), // bỏ .js
-      id: path.basename(file, ".js"), // bỏ .js
-      createdAt: stats.birthtime, // thời gian tạo file
-    };
-  });
-
-  // Search theo fileName (không phân biệt hoa thường)
+  let filtered = scripts;
   if (search) {
     const keyword = search.toLowerCase();
-    fileInfos = fileInfos.filter(f =>
-      f.fileName.toLowerCase().includes(keyword)
+    filtered = scripts.filter(s =>
+      s.name.toLowerCase().includes(keyword)
     );
   }
 
-  fileInfos.sort((a, b) => b.createdAt - a.createdAt);
+  if (selectedStatusItems?.length > 0) {
+    filtered = filtered.filter(s =>
+      selectedStatusItems.includes(s.status)
+    );
+  }
 
-  const total = fileInfos.length;
+  filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  const total = filtered.length;
   const totalPages = Math.ceil(total / Pagination.limit);
-  const result = fileInfos.slice(offset, offset + Pagination.limit);
+  const result = filtered.slice(offset, offset + Pagination.limit);
+
+  const convertedData = await Promise.all(
+    result.map(async (item) => {
+      const project_name = await getProjectNameById(item.project_id);
+      return { ...item, project_name };
+    })
+  );
+
 
   return {
-    data: result,
+    data: convertedData,
     pagination: {
       page: parseInt(currentPage, 10),
       totalItems: total,
@@ -88,177 +97,228 @@ const getAllScripts = async (req) => {
       hasPre: currentPage > 1
     }
   };
-
 }
 
 const getAllScriptsByProject = async (req) => {
-  const { projectName } = req.query;
+  const { id } = req.params;
 
-  // Đọc danh sách file .js trong scripts/
-  const files = fs
-    .readdirSync(config.SCRIPT_DIR)
-    .filter(file => file.endsWith(".js"));
+  const scripts = getScripts();
 
-  let fileInfos = files.map(file => {
-    const filePath = path.join(config.SCRIPT_DIR, file);
-    const stats = fs.statSync(filePath);
-    return {
-      fileName: path.basename(file, ".js"), // bỏ .js
-      id: path.basename(file, ".js"), // bỏ .js
-      createdAt: stats.birthtime, // thời gian tạo file
-    };
-  });
+  let filtered = scripts.filter(s => s.project_id === id && s.status === StatusCommon.IN_ACTIVE);
 
-  if (projectName) {
-    let baseName = projectName.toLowerCase();
+  filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    // bỏ phần trong ngoặc: (Season 2), (test), ...
-    baseName = baseName.replace(/\(.*?\)/g, "").trim();
+  return {
+    data: filtered,
+    pagination: {
+      totalItems: filtered.length,
+    }
+  };
+}
 
-    // nếu có số ở cuối tên, bỏ đi (SoSoValue 2 -> SoSoValue)
-    baseName = baseName.replace(/\s+\d+$/, "").trim();
+const getScriptNameById = (id) => {
+  const scripts = getScripts();
 
-    fileInfos = fileInfos.filter(f =>
-      f.fileName.toLowerCase().includes(baseName)
-    );
+  const script = scripts.find(s => s.id === id);
+
+  if (!script) {
+    return "";
   }
 
-  fileInfos.sort((a, b) => b.createdAt - a.createdAt);
-
-  return fileInfos;
+  return script.name
 
 }
 
-const getScriptByFileName = async (fileName) => {
-  const scriptPath = path.join(config.SCRIPT_DIR, `${fileName}.js`);
+const getScriptIdByName = (name) => {
+  const scripts = getScripts();
 
-  if (!fs.existsSync(scriptPath)) {
-    throw new NotFoundException(`Không tìm thấy kịch bản này!`)
+  const script = scripts.find(s => s.name === name);
+
+  if (!script) {
+    throw new NotFoundException(`Không tìm thấy script này!`)
   }
 
-  const scriptContent = fs.readFileSync(scriptPath, 'utf8');
+  return script.id;
+}
 
-  const match = scriptContent?.match(/const\s+logicItems\s*=\s*(\[[\s\S]*?\]);/);
+const getScriptById = async (id) => {
+  const scripts = getScripts();
 
-  let logicItems = [];
+  const script = scripts.find(s => s.id === id);
 
-  if (match) {
-    logicItems = JSON.parse(match[1]);
+  if (!script) {
+    throw new NotFoundException(`Không tìm thấy script này!`)
   }
 
-  return { fileName, logicItems };
+  const project_name = script?.project_id ? await getProjectNameById(script.project_id) : null;
+  const data = {
+    project_name: project_name || '',
+    ...script,
+  }
+
+  const profileTestOpenning = getCurrentBrowserTest();
+
+  return { data, profileTestOpenning };
+}
+
+const getCurrentBrowserTest = () => {
+  const profileTest = getBrowserTest();
+
+  if (Object.keys(profileTest).length <= 0) {
+    return false;
+  }
+
+  return true;
 }
 
 const createScript = async (body) => {
-  validateScript(body);
+  const data = validateScript(body);
+  const name = data.name;
+  const { logicItems, project_name } = body;
+  const scripts = getScripts();
 
-  const { fileName, code, logicItems } = body;
+  const project_id = project_name ? await getProjectIdByName(project_name) : null;
 
-  const scriptPath = path.join(config.SCRIPT_DIR, `${fileName}.js`);
+  const id = `${crypto.randomUUID()}_${Date.now()}`;
+  const now = new Date();
+  scripts.push({
+    id,
+    name,
+    project_id: project_id || '',
+    createdAt: now,
+    updatedAt: now,
+    status: StatusCommon.IN_ACTIVE,
+    description: data?.description || '',
+    logicItems,
+  })
+  modifieScript(scripts);
 
-  if (fs.existsSync(scriptPath)) {
-    throw new RestApiException(`Tên kịch bản ${fileName} đã tồn tại!`);
-  }
-
-  const fileContent = `
-// Generated Script ${fileName}
-
-async function runScript({context, page, chrome, profile, port}) {
-${code ? code
-      ?.split('\n')
-      ?.map(line => line?.trim() === '' ? '' : '  ' + line)
-      ?.join('\n')
-      : "  return;"
-    }
-}
-
-const logicItems = ${JSON.stringify(logicItems, null, 2)};
-
-export { runScript, logicItems };
-`;
-
-  fs.writeFileSync(scriptPath, fileContent, 'utf8');
-
-  return fileName;
+  return id;
 }
 
 const updateScript = async (body) => {
-  validateScript(body);
+  const data = validateScript(body);
+  const name = data.name;
+  const { id, logicItems, project_name } = body;
+  const scripts = getScripts();
 
-  const { oldFileName, fileName, code, logicItems } = body;
+  const script = scripts.find(s => s.id === id);
 
-  const scriptOldPath = path.join(config.SCRIPT_DIR, `${oldFileName}.js`);
-  const scriptNewPath = path.join(config.SCRIPT_DIR, `${fileName}.js`);
-
-  if (!fs.existsSync(scriptOldPath)) {
-    throw new NotFoundException(`Không tìm thấy kịch bản này!`)
+  if (!script) {
+    throw new NotFoundException(`Không tìm thấy script này!`)
   }
 
-  if (fileName !== oldFileName && fs.existsSync(scriptNewPath)) {
-    throw new RestApiException(`Tên kịch bản ${fileName} đã tồn tại!`);
-  }
+  const project_id = project_name ? await getProjectIdByName(project_name) : null;
+  const now = new Date();
+  script.name = name;
+  script.project_id = project_id || '';
+  script.updatedAt = now;
+  script.description = data?.description || '';
+  script.logicItems = logicItems || [];
+  modifieScript(scripts);
 
-  const fileContent = `
-// Generated Script ${fileName}
-
-async function runScript({context, page, chrome, profile, port}) {
-${code ? code
-      ?.split('\n')
-      ?.map(line => line?.trim() === '' ? '' : '  ' + line)
-      ?.join('\n')
-      : "  return;"
-    }
+  return script;
 }
 
-const logicItems = ${JSON.stringify(logicItems, null, 2)};
+const updateScriptStatus = async (body) => {
+  const { id } = body;
+  const data = validateStatus(body);
+  const scripts = getScripts();
 
-export { runScript, logicItems };
-`;
+  const script = scripts.find(s => s.id === id);
 
-  if (fileName !== oldFileName) {
-    // fs.unlinkSync(scriptOldPath);
-    fs.renameSync(scriptOldPath, scriptNewPath);
-  }
-  fs.writeFileSync(scriptNewPath, fileContent, 'utf8');
-
-  return fileName;
-}
-
-const deleteScript = async (fileName) => {
-  // đọc ghi file nặng load lâu thì các api khác có phải chờ đọc ghi xong mới chạy được hay ko ?
-
-  const scriptPath = path.join(config.SCRIPT_DIR, `${fileName}.js`);
-
-  if (!fs.existsSync(scriptPath)) {
-    throw new NotFoundException(`Không tìm thấy kịch bản này!`)
+  if (!script) {
+    throw new NotFoundException(`Không tìm thấy script này!`)
   }
 
-  fs.unlinkSync(scriptPath);
+  script.status = data.status === StatusCommon.IN_ACTIVE ? StatusCommon.UN_ACTIVE : StatusCommon.IN_ACTIVE;
+  modifieScript(scripts);
 
-  return fileName;
+  return script.status;
 }
 
-const script = async ({ page, context, chrome, code }) => {
+const deleteScript = async (id) => {
+  const scripts = getScripts();
 
+  const script = scripts.find(s => s.id === id);
+
+  if (!script) {
+    throw new NotFoundException(`Không tìm thấy script này!`)
+  }
+  const filtered = scripts.filter(s => s.id !== id);
+
+  modifieScript(filtered);
+
+  return id;
+}
+
+let needSendSocket = true;
+
+const script = async ({ page, context, chrome, codes }) => {
+
+  const wrapCode = codes.map(code => {
+    const line = code.split('\n').find(l => l.includes('🎬 Action:'));
+    const match = line?.match(/Action:\s*(.*?)\s*(?:🡆\s*(.*))?$/m);
+    const actionName = match?.[1]?.trim() || 'Unknown Action';
+    const target = match?.[2]?.trim() || null;
+
+    return `{
+  const start = Date.now();
+  let status = "${Message.SUCCESS}";
+  let errorMsg = "";
+
+  try {
+    ${code}
+  } catch (error) {
+    status = "Failed";
+    errorMsg = error.message;
+    // Optionally: không throw để script chạy tiếp action sau
+    // throw error; // (nếu muốn dừng toàn bộ script)
+    throw error;
+  } finally {
+    const log = {
+      time: new Date().toLocaleTimeString("en-GB", { hour12: false, timeZone: "Asia/Ho_Chi_Minh" }),
+      action: "${actionName}",
+      target: "${target}",
+      duration: Date.now() - start,
+      status,
+      errorMsg,
+    };
+    socket.emit('logs', { log });
+  }
+}`;
+  });
+
+  const code = wrapCode.join('\n\n');
   const socket = getSocket();
 
   const fn = new Function("page", "context", "chrome", "socket", `
-  return (async () => {
+    return (async () => {
     ${code}
-
+    const log = {
+      time: new Date().toLocaleTimeString("en-GB", { hour12: false, timeZone: "Asia/Ho_Chi_Minh" }),
+      action: "finished",
+      status: 'Finished',
+    };
+    socket.emit('logs', { log });
     socket.emit('scriptCompleted', { completed: true });
   })();
-`);
+  `);
 
-  // ko await script chạy xong mới done api => done khi mở profile đã close pages extension
+  // ko await script chạy xong mới done api => done khi đã mở xong profile
   fn(page, context, chrome, socket).catch(err => {
+    console.error("❌ Có lỗi khi chạy script:", err);
+    if (!needSendSocket) {
+      needSendSocket = true;
+      return;
+    }
     socket.emit('scriptCompleted', { completed: true }); // có lỗi trong code mà ko bắt try catch thì dừng luôn
-    console.error("❌ Có lỗi khi chạy kịch bản:", err);
   });
 
 }
+const runScript = async (req) => {
 
-const runScript = async (code) => {
+  const { codes } = req.query;
 
   const profileTest = getBrowserTest();
 
@@ -273,38 +333,21 @@ const runScript = async (code) => {
 
     // khi chưa mở profile
     // chạy script ở page[0] => nếu đóng page đó thì script bị lỗi => dừng script
-    script({ context, page, chrome, code })
+    script({ context, page, chrome, codes })
 
   }
   else {
-    const { context, chrome, browser } = profileTest;
-    // khi đang mở profile
-    // tìm ra 1 page đang được mở => chạy script (nên để 1 page để chạy, 2 page trở lên sẽ random)
+    const { page, context, chrome } = await stopScript(true);
 
-    if (!browser) {
-      const pages = getValidPages(context);
-      const getPage = pages[0] || await context.newPage();
-      script({ context, page: getPage, chrome, code })
+    if (chrome) {
+      script({ context, page, chrome, codes })
+      // Nổi cửa sổ
+      activeChrome(chrome.pid)
     }
-    else {
-      const getContext = browser.contexts()[0];
-      const pages = getValidPages(getContext);
-      const getPage = pages[0] || await context.newPage();
-
-      setBrowserTest({
-        context: getContext,
-        page: getPage,
-        chrome,
-        browser: null,
-      });
-
-      script({ context: getContext, page: getPage, chrome, code })
-    }
-    // active
   }
 }
 
-const stopScript = async () => {
+const stopScript = async (needSocket = false) => {
 
   const profileTest = getBrowserTest();
   const { chrome } = profileTest;
@@ -314,18 +357,31 @@ const stopScript = async () => {
   }
 
   setIsStop(true);
+
+  if (!needSocket) {
+    needSendSocket = false;
+  }
   // context.close sẽ ăn vào disconnected => isStop là true => set isStop = false
   await profileTest?.context?.close(); // nếu đang chạy code js sẽ ko dừng ngay mà chờ đến khi chạy code playwright mới dừng
-  // attach lại event disconnected => isStop = false => ăn click bằng X
+  // attach lại event disconnected
   const { browser } = await reConnectBrowser({ chrome });
 
   if (browser) {
+    const getContext = browser?.contexts()[0];
+    const pages = getValidPages(getContext);
+    const getPage = pages[0] || await getContext?.newPage();
+
     setBrowserTest({
-      context: null,
-      page: null,
+      context: getContext,
+      page: getPage,
       chrome,
-      browser,
     });
+
+    return {
+      page: getPage,
+      context: getContext,
+      chrome,
+    };
   }
 
   return true;
@@ -359,6 +415,16 @@ const closeProfile = async () => {
   return true;
 };
 
+const validateStatus = (data) => {
+  const { error, value } = statusValidation.validate(data, { stripUnknown: true });
+
+  if (error) {
+    throw new ValidationException(error.details[0].message);
+  }
+
+  return value;
+};
+
 const validateScript = (data) => {
   const { error, value } = scriptSchema.validate(data, { stripUnknown: true });
 
@@ -372,13 +438,17 @@ const validateScript = (data) => {
 
 module.exports = {
   createScript,
-  getScriptByFileName,
+  getScriptById,
+  getScriptIdByName,
+  getScriptNameById,
   updateScript,
+  updateScriptStatus,
   getAllScripts,
   deleteScript,
   runScript,
   openProfile,
   closeProfile,
   stopScript,
-  getAllScriptsByProject
+  getAllScriptsByProject,
+  getCurrentBrowserTest,
 };

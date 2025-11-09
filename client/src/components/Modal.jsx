@@ -54,7 +54,7 @@ export default function Modal({
           height: 65
         }}
       >
-        <span className='fw-500'>
+        <span className='fw-500 flex'>
           {title}
         </span>
         <X className='x-modal' onClick={onClose} size={'22px'} />
@@ -62,7 +62,7 @@ export default function Modal({
       <DialogContent className='color-white' sx={{
         width,
         height,
-        overflowY: 'hidden'
+        overflowY: 'hidden',
       }}>
         {content}
       </DialogContent>

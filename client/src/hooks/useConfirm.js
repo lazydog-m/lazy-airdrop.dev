@@ -66,23 +66,23 @@ const useConfirm = () => {
     }).then((result) => {
       if (result.isConfirmed) {
 
-        if (onOk) {
-          setTimeout(() => {
-            onOk?.();
-          }, 150)
-        }
+        // if (onOk) {
+        //   setTimeout(() => {
+        //     onOk?.();
+        //   }, 150)
+        // }
       } else {
         // onCancel?.();
       }
     });
   };
 
-  const showLoading = () => {
+  const showLoading = (title = 'Đang xử lý ...') => {
     Swal.fire({
       customClass: {
         container: 'my-swal',
       },
-      title: 'Đang xử lý...',
+      title,
       allowOutsideClick: false, // Prevent dismissing by clicking outside
       allowEscapeKey: false,   // Prevent dismissing by pressing Escape
       didOpen: () => {

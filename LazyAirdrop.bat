@@ -24,18 +24,11 @@ if defined CHROME_PID (
     set CHROME_RUNNING=1
 )
 
-
 if %CHROME_RUNNING%==0 (
-echo.
-echo ✅ Application already started ...
-    
-%NIRCMD_PATH% win activate process /%CHROME_PID%
-%NIRCMD_PATH% win max process /%CHROME_PID%
-
-exit
+    %NIRCMD_PATH% win activate process /%CHROME_PID%
+    %NIRCMD_PATH% win max process /%CHROME_PID%
+    exit
 ) 
-
-
 
 powershell -Command "Start-Process '%CMD_PATH%' -ArgumentList 'run','dev' -WorkingDirectory '%ROOT%' -WindowStyle Hidden"
 
@@ -54,7 +47,7 @@ if errorlevel 1 goto wait_ports
 echo.
 echo ✅ Application started ...
 
-powershell -Command "Start-Process 'cmd.exe' -ArgumentList '/c start /wait "%CHROME_PATH%" --user-data-dir="%TEMP_PROFILE_DIR%" --no-default-browser-check --hide-crash-restore-bubble --no-first-run --start-maximized --app="%PROJECT_URL%" & taskkill /IM node.exe /F >nul 2>&1' -WindowStyle Hidden"
+powershell -Command "Start-Process 'cmd.exe' -ArgumentList '/c start /wait "%CHROME_PATH%" --user-data-dir="%TEMP_PROFILE_DIR%" --no-default-browser-check --hide-crash-restore-bubble --no-first-run --start-maximized --app="%PROJECT_URL%" & powershell -NoProfile -Command ""Get-NetTCPConnection -LocalPort %SERVER_PORT%,%CLIENT_PORT% -State Listen | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { $p = Get-Process -Id $_ -ErrorAction SilentlyContinue; if($p -and $p.ProcessName -ieq ''node'') { Stop-Process -Id $_ -Force } }""' -WindowStyle Hidden"
 
 exit
 

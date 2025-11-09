@@ -1,25 +1,4 @@
-import FormProvider from "@/components/hook-form/FormProvider"
-import RHFInput from "@/components/hook-form/RHFInput"
-import { Col, Row } from "antd"
-import React, { useState, useEffect, useRef } from 'react';
-import * as Yup from 'yup';
-import { useNavigate } from "react-router-dom"
-// form
-import { yupResolver } from '@hookform/resolvers/yup';
-import { Controller, useForm } from 'react-hook-form';
-import { ButtonPrimary } from "@/components/Button";
-import { apiPost, apiPut } from "@/utils/axios";
-import useConfirm from "@/hooks/useConfirm";
-import useSpinner from "@/hooks/useSpinner";
-import { PATH_DASHBOARD } from "@/routes/path";
-import useMessage from "@/hooks/useMessage";
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'; // hoặc chọn style khác
-import { Copy, CopyCheck, Folder, MoveDown } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import Select from "@/components/Select";
-import { Color, NOT_AVAILABLE } from "@/enums/enum";
-import { Separator } from "@/components/ui/separator";
+import { Color } from "@/enums/enum";
 
 export default function ScriptLogs({
   logs = []
@@ -29,32 +8,60 @@ export default function ScriptLogs({
   return (
     <div className="logs-container font-inter fs-14">
       {logs.map((log, index) => {
+        const isFinished = log?.action === 'finished';
+        const totalDuration = isFinished
+          ? logs
+            .reduce((acc, log) => acc + (log?.duration || 0), 0)
+          : null;
+
         return (
           <>
             <div className="logs d-flex align-items-center" key={index}>
-              <span className="log-item log-time">{log.time}</span>
+              <span className="log-item log-time fw-400">{log?.time}</span>
 
               <span
-                className="log-item log-action fw-500 d-flex"
-                style={{ color: Color.PRIMARY }}
+                className="log-item log-action"
+                style={{
+                  color: isFinished ? 'white' : Color.PRIMARY,
+                }}
               >
-                {log.action}
+                <span className={isFinished ? '' : 'pointer'}
+                  style={{
+                    fontWeight: isFinished ? '400' : '500',
+                  }}
+                >
+                  {isFinished ? `Script completed in ${`${totalDuration} ms`}` : log?.action}
+                </span>
+                {log?.target &&
+                  <span
+                    className="fw-500"
+                    style={{ color: Color.BROWN }}
+                  >
+                    {' 🡆 '}
+                    {` '${log?.target || '?'}'`}
+                  </span>
+                }
               </span>
 
-              <span className="log-item">|</span>
+              {!isFinished ?
+                <>
+                  <span className="log-item">|</span>
 
-              <span className="log-item log-duration">{`${log.duration} ms`}</span>
+                  <span className="log-item log-duration">{`${log?.duration} ms`}</span>
+                </>
+                : null
+              }
               <span
                 className="log-item log-status fw-500"
-                style={{ color: log.status === 'Success' ? Color.SUCCESS : Color.ORANGE }}
+                style={{ color: log?.status === 'Failed' ? Color.ORANGE : Color.SUCCESS }}
               >
-                {`[${log.status}]`}
+                {`[${log?.status}]`}
               </span>
             </div>
 
-            {log?.message &&
+            {log?.errorMsg &&
               <>
-                <span className="log-item log-message" style={{ color: Color.ORANGE }}>{log?.message}</span>
+                <span className="log-item log-message" style={{ color: Color.ORANGE }}>{log?.errorMsg}</span>
               </>
             }
           </>
@@ -64,4 +71,5 @@ export default function ScriptLogs({
 
   )
 }
+
 

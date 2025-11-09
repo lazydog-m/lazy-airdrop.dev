@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
-import { CirclePause, CirclePlay, CirclePlus, Grip, ListFilter, Pause, Play } from 'lucide-react';
+import { Chrome, CirclePause, CirclePlay, CirclePlus, Grip, ListFilter, Pause, Play } from 'lucide-react';
 import Popover from "@/components/Popover";
 import { ButtonGhost, ButtonInfo, ButtonOrange, ButtonOutline, ButtonOutlinePrimary, ButtonOutlineTags, ButtonPrimary } from '@/components/Button';
 import { Color, StatusCommon } from '@/enums/enum';
@@ -13,6 +13,7 @@ import { convertResource, convertStatusCommonEnumToColorHex, convertStatusCommon
 import { DropdownCheckboxMenu } from '@/components/Checkbox';
 import { RESOURCES } from '@/commons/Resources';
 import InputUi from '@/components/InputUi';
+import useConfirm from '@/hooks/useConfirm';
 
 export default function ProfileFilterSearch({
   selectedStatusItems,
@@ -39,6 +40,7 @@ export default function ProfileFilterSearch({
 
   const { onOpen, onClose } = useSpinner();
   const { onSuccess, onError } = useMessage();
+  const { showLoading, swalClose } = useConfirm();
   const [filterSearch, setFilterSearch] = useState('');
 
   const debounceValue = useDebounce(filterSearch, 500);
@@ -58,15 +60,15 @@ export default function ProfileFilterSearch({
     }
 
     try {
-      onOpen();
+      showLoading();
       const response = await apiGet("/profiles/open-multiple", params);
       const ids = response.data.data;
       onAddOpenningIds(ids);
-      onClose();
+      swalClose();
     } catch (error) {
       console.error(error);
       onError(error.message);
-      onClose();
+      swalClose();
     }
   }
 
@@ -76,15 +78,15 @@ export default function ProfileFilterSearch({
     }
 
     try {
-      onOpen();
+      showLoading();
       const response = await apiGet("/profiles/close-multiple", params);
       const ids = response.data.data;
       onRemoveOpenningIds(ids);
-      onClose();
+      swalClose();
     } catch (error) {
       console.error(error);
       onError(error.message);
-      onClose();
+      swalClose();
     }
   }
 
@@ -192,7 +194,7 @@ export default function ProfileFilterSearch({
             }
           />
 
-          {(selectedStatusItems.length > 0 || search) &&
+          {(selectedStatusItems.length > 0 || filterSearch) &&
             <ButtonGhost
               icon={<ListFilter color={Color.ORANGE} />}
               onClick={clearAll}
@@ -211,8 +213,8 @@ export default function ProfileFilterSearch({
                 pointerEvents: loadingIds.size > 0 ? 'none' : '',
               }}
               onClick={handleOpenProfiles}
-              icon={<Play />}
-              title={'Mở'}
+              icon={<Chrome />}
+              title={'Open'}
             />
 
             <ButtonOrange
@@ -221,8 +223,8 @@ export default function ProfileFilterSearch({
                 pointerEvents: loadingIds.size > 0 ? 'none' : '',
               }}
               onClick={handleCloseProfiles}
-              icon={<Pause />}
-              title={'Đóng'}
+              icon={<Chrome />}
+              title={'Close'}
             />
             {openningIds.size > 0 &&
               <ButtonOutline

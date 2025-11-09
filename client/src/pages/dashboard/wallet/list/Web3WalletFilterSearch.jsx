@@ -74,7 +74,7 @@ export default function Web3WalletFilterSearch({
             }
           />
 
-          {(selectedStatusItems?.length > 0 || search) &&
+          {(selectedStatusItems?.length > 0 || filterSearch) &&
             <ButtonGhost
               icon={<ListFilter color={Color.ORANGE} />}
               onClick={clearAll}

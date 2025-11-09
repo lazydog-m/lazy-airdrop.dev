@@ -2,8 +2,8 @@ import { ButtonIcon, ButtonInfo, ButtonOutlinePrimary, ButtonPrimary } from "@/c
 import DropdownUi from "@/components/DropdownUi";
 import { Badge } from "@/components/ui/badge";
 import { Color, DailyTaskRefresh, StatusCommon } from "@/enums/enum";
-import { darkenColor, lightenColor } from "@/utils/convertUtil";
-import { CheckCheck, CirclePlay, ClipboardClock, ClipboardPen, Clock, Ellipsis, FileSymlink, Star, ToggleLeft, ToggleRight, Trash2, UserRoundCheck, } from "lucide-react";
+import { convertProjectTaskTypeEnumToText, darkenColor, lightenColor } from "@/utils/convertUtil";
+import { CheckCheck, CirclePlay, Clipboard, ClipboardClock, ClipboardList, ClipboardPen, Clock, Ellipsis, FileSymlink, Star, ToggleLeft, ToggleRight, Trash2, UserRoundCheck, } from "lucide-react";
 import React, { useState } from "react";
 import { RiTodoLine } from "react-icons/ri";
 import { GrSchedulePlay } from "react-icons/gr";
@@ -20,6 +20,7 @@ import Modal from "@/components/Modal";
 import { apiDelete, apiPut } from "@/utils/axios";
 import { Link } from "react-router-dom";
 import { PATH_DASHBOARD } from "@/routes/path";
+import TaskProfileList from "../task-profile/TaskProfileList";
 
 export default function ProjectTaskDataTable({
   data = [],
@@ -31,9 +32,11 @@ export default function ProjectTaskDataTable({
   projectId,
   projectName,
   projectDailyTaskRefresh,
+  selectedTaskTab
 }) {
 
   const [open, setOpen] = React.useState(false);
+  const [openProfiles, setOpenProfiles] = React.useState(false);
   const [task, setTask] = React.useState({});
   const { onOpen, onClose } = useSpinner();
   const { showConfirm, onCloseLoader } = useConfirm();
@@ -45,8 +48,17 @@ export default function ProjectTaskDataTable({
     setTask(item);
   };
 
+  const handleClickOpenProfiles = (item) => {
+    setOpenProfiles(true);
+    setTask(item);
+  };
+
   const handleClose = () => {
     setOpen(false);
+  };
+
+  const handleCloseProfiles = () => {
+    setOpenProfiles(false);
   };
 
   const handleDelete = (id, name) => {
@@ -119,6 +131,7 @@ export default function ProjectTaskDataTable({
               fill={row?.order_star ? Color.WARNING : 'transparent'}
             />
             <DropdownUi
+              minW={'185px'}
               align='end'
               footerDelete
               trigger={
@@ -148,9 +161,10 @@ export default function ProjectTaskDataTable({
                 {
                   title: (
                     <MoreItem
+                      capitalize
                       title={row?.script_name || 'Tạo script'}
                       icon={<FileSymlink size={'17px'} />}
-                      path={row?.script_name ? PATH_DASHBOARD.script.edit(row?.script_name) : PATH_DASHBOARD.script.create}
+                      path={row?.script_name ? PATH_DASHBOARD.script.edit(row?.script_id) : PATH_DASHBOARD.script.create}
                     />
                   ),
                 },
@@ -181,35 +195,21 @@ export default function ProjectTaskDataTable({
               {`${row?.points} Points`}
             </BadgePrimaryOutline>
           }
-          <BadgePrimary>
-            {'Automation'}
-          </BadgePrimary>
-
-          {row?.has_manual &&
+          {row?.script_name ?
+            <BadgePrimary>
+              <span className="text-too-long-auto">
+                {row?.script_name}
+              </span>
+              {row?.has_manual &&
+                <span className="">
+                  {' + Manual'}
+                </span>
+              }
+            </BadgePrimary> :
             <BadgeWhite>
-              Manual
+              No automation
             </BadgeWhite>
           }
-
-          {/* <Badge className='custom-badge bdr select-none gap-1' */}
-          {/*   style={{ */}
-          {/*     backgroundColor: `${darkenColor(Color.SUCCESS)}`, */}
-          {/*     borderColor: `${lightenColor(Color.SUCCESS)}`, */}
-          {/*     color: 'white', */}
-          {/*   }} */}
-          {/* > */}
-          {/*   <CheckCheck size={17} /> */}
-          {/*   Done */}
-          {/* </Badge> */}
-          {/* <Badge className='custom-badge bdr select-none' */}
-          {/*   style={{ */}
-          {/*     backgroundColor: `${darkenColor(Color.WARNING)}`, */}
-          {/*     borderColor: `${lightenColor(Color.WARNING)}`, */}
-          {/*     color: 'white', */}
-          {/*   }} */}
-          {/* > */}
-          {/*   CD-24 */}
-          {/* </Badge> */}
         </div>
 
         <div className="project-task-progress mt-20">
@@ -250,9 +250,11 @@ export default function ProjectTaskDataTable({
           </Badge>
 
           <div className="d-flex">
-            <ButtonInfo
-              className='button-primary color-white select-none font-inter pointer h-31 fs-13 d-flex'
-              icon={<GrSchedulePlay />}
+            <ButtonOutlinePrimary
+              className='button-outline-primary color-white select-none font-inter pointer h-31 fs-13 d-flex'
+              title={'Làm'}
+              icon={<GrSchedulePlay className="size-4.5" />}
+              onClick={() => handleClickOpenProfiles(row)}
             />
           </div>
         </div>
@@ -280,14 +282,38 @@ export default function ProjectTaskDataTable({
       />
 
       <Modal
+        height={'800px'}
+        width={'1600px'}
+        size='xxl'
+        isOpen={openProfiles}
+        onClose={() => setOpenProfiles(false)}
+        title={
+          <span className="text-capitalize">
+            <span className="text-too-long-480">
+              {`${task?.name}`}
+            </span>
+            {` - ${convertProjectTaskTypeEnumToText(task?.type) || ''} - ${projectName}`} {task?.points && `(+${task?.points} Points)`}
+          </span>
+        }
+        content={
+          <TaskProfileList
+            projectId={projectId}
+            projectName={projectName}
+            task={task}
+          />
+        }
+      />
+
+      <Modal
         isOpen={open}
         onClose={handleClose}
-        title={"Cập nhật task hằng ngày"}
+        title={`Cập nhật task ${convertProjectTaskTypeEnumToText(selectedTaskTab)}`}
         content={
           <ProjectTaskNewEditForm
-            onCloseModal={handleClose}
+            selectedTaskTab={selectedTaskTab}
             currentTask={task}
             isEdit={isEdit}
+            onCloseModal={handleClose}
             onUpdateData={onUpdateData}
             projectName={projectName}
             projectId={projectId}
@@ -298,13 +324,13 @@ export default function ProjectTaskDataTable({
   )
 }
 
-const MoreItem = ({ title, icon, path }) => {
+const MoreItem = ({ title, icon, path, capitalize = false }) => {
   if (path) {
     return (
       <Link to={path}
         style={{ width: '100%' }}
         className='fw-400 font-inter fs-13 d-flex justify-content-between gap-20'>
-        <span className="text-too-long-180">
+        <span className={`text-too-long-180 ${capitalize && 'text-capitalize'}`}>
           {title}
         </span>
         {icon}
@@ -316,7 +342,7 @@ const MoreItem = ({ title, icon, path }) => {
     <div
       style={{ width: '100%' }}
       className='fw-400 font-inter fs-13 d-flex justify-content-between gap-20'>
-      <span className="text-too-long-180">
+      <span className={`text-too-long-180 ${capitalize && 'text-capitalize'}`}>
         {title}
       </span>
       {icon}

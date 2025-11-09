@@ -43,7 +43,7 @@ export default function ProfileWeb3WalletFilterSearch({
           onChange={(event) => setFilterSearch(event.target.value)}
         />
 
-        {search &&
+        {filterSearch &&
           <ButtonGhost
             icon={<ListFilter color={Color.ORANGE} />}
             onClick={clearAll}

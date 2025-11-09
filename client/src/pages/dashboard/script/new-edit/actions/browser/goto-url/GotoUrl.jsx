@@ -15,7 +15,7 @@ const getCodeGotoUrl = ({
 }) => {
   const lines = [];
 
-  if (delayTime !== 0) {
+  if (delayTime > 0) {
     lines.push(`await page.waitForTimeout(${delayTime});`);
   }
 
@@ -24,27 +24,35 @@ const getCodeGotoUrl = ({
   lines.push(`await page.waitForLoadState('networkidle');`);
 
   // return lines.join('\n');
+  const code = lines.join('\n');
+  const header = createCommentHeader({
+    action,
+    target: url,
+    description,
+  });
+  return `${header}\n${code}`;
 
   // body
-  const startDuration = createCodeStartDuration();
-  const tryCatch = createCodeTryCatch({
-    tryBlock: [
-      createCodeAutomation(lines),
-      createCodeLog({ type: SUCCESS_MESSAGE, action })
-    ],
-    catchBlock: [
-      createCodeLog({ type: ERROR_MESSAGE, action })
-    ]
-  });
+  // const startDuration = createCodeStartDuration();
+  // const tryCatch = createCodeTryCatch({
+  //   tryBlock: [
+  //     createCodeAutomation(lines),
+  //     createCodeLog({ type: SUCCESS_MESSAGE, action }),
+  //   ],
+  //   catchBlock: [
+  //     createCodeLog({ type: ERROR_MESSAGE, action })
+  //   ]
+  // });
 
-  const header = createCommentHeader({ action, description });
-  const body = createCodeBody([
-    startDuration,
-    tryCatch,
-  ])
-  const block = createCodeBlock({ header, body });
-
-  return block;
+  // const header = createCommentHeader({ action, description });
+  // const body = createCodeBody([
+  //   startDuration,
+  //   tryCatch,
+  // ])
+  // const block = createCodeBlock({ header, body });
+  // const block = createCodeBlock({ header, body: lines.join('\n') });
+  //
+  // return block;
 };
 
 const getPlaceholderGotoUrl = ({
@@ -54,18 +62,16 @@ const getPlaceholderGotoUrl = ({
 }) => {
   const parts = [];
 
-  if (delayTime !== 0) {
-    parts.push(`${delayTime / TIMEOUT_DIVIDE}s`);
-  }
+  parts.push(`${delayTime / TIMEOUT_DIVIDE}s`);
 
-  if (url !== '') {
-    // parts.push(`'${url}' ${timeout !== 0 ? `(${timeout})` : ''}`);
-    parts.push(`'${url}'`);
-  }
+  // if (url !== '') {
+  // parts.push(`'${url}' ${timeout !== 0 ? `(${timeout})` : ''}`);
+  parts.push(`'${url || null}'`);
+  // }
 
   if (parts.length === 0) return '';
 
-  return `// ${parts.join(' => ')}`;
+  return ` ${parts.join(' 🡆 ')}`;
 };
 
 export const GotoUrl = {

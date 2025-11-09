@@ -5,27 +5,34 @@ import useSpinner from '@/hooks/useSpinner';
 import useMessage from '@/hooks/useMessage';
 import useTable from '@/hooks/useTable';
 import { delayApi } from '@/utils/commonUtil';
-import ProjectProfileFilterSearch from './ProjectProfileFilterSearch';
-import ProjectProfileDataTable from './ProjectProfileDataTable';
+import TaskProfileFilterSearch from './TaskProfileFilterSearch';
+import TaskProfileDataTable from './TaskProfileDataTable';
 import { ButtonDanger, ButtonInfo, ButtonOrange, ButtonOutlinePrimary, ButtonPrimary } from '@/components/Button';
-import { ClipboardPlus, LogIn, LogOut, UserMinus, UserPlus, UserRoundMinus, UserRoundPlus } from 'lucide-react';
-import { StatusCommon } from '@/enums/enum';
+import { Chrome, CirclePlay, ClipboardPlus, LogIn, LogOut, ThumbsDownIcon, ThumbsUpIcon, UserMinus, UserPlus, UserRoundMinus, UserRoundPlus } from 'lucide-react';
+import { Color, StatusCommon } from '@/enums/enum';
 import useConfirm from '@/hooks/useConfirm';
+import { Button } from '@/components/ui/button';
+import {
+  ButtonGroup,
+  ButtonGroupSeparator,
+} from "@/components/ui/button-group"
+import useSocket from '@/hooks/useSocket';
 
-const ProjectProfileDataTableMemo = React.memo(ProjectProfileDataTable);
+const TaskProfileDataTableMemo = React.memo(TaskProfileDataTable);
 
-export default function ProjectProfileList({ project = {} }) {
+export default function TaskProfileList({ projectId = '', projectName = '', task = {} }) {
   const [open, setOpen] = useState(false); // modal
   const [data, setData] = useState([]);
   const [pagination, setPagination] = useState({});
   const { onOpen, onClose } = useSpinner();
   const { showLoading, swalClose } = useConfirm();
   const { onSuccess, onError } = useMessage();
+  const [openningIds, setOpenningIds] = useState(new Set());
+  const [loadingIds, setLoadingIds] = React.useState(new Set());
+  const socket = useSocket();
 
   const [search, setSearch] = useState('');
-  const [selectedTab, setSelectedTab] = useState(StatusCommon.IN_ACTIVE);
-
-  const isTabFree = selectedTab === 'free';
+  const [selectedTab, setSelectedTab] = useState(StatusCommon.IN_COMPLETE);
 
   const {
     onSelectRow,
@@ -40,7 +47,6 @@ export default function ProjectProfileList({ project = {} }) {
     const params = {
       page,
       search,
-      resources: project?.resources || [],
       selectedTab,
     }
 
@@ -49,13 +55,14 @@ export default function ProjectProfileList({ project = {} }) {
         onOpen();
       }
 
-      const response = await apiGet(`/project-profiles/${project?.id}`, params);
+      const response = await apiGet(`/task-profiles/${projectId}`, params);
       console.log(response.data.data)
 
       if (dataTrigger) {
         delayApi(() => {
           setData(response.data.data.data || []);
           setPagination(response.data.data.pagination || {});
+          setOpenningIds(new Set(response.data.data.browsers));
           onTrigger();
         })
       }
@@ -63,44 +70,7 @@ export default function ProjectProfileList({ project = {} }) {
         delayApi(() => {
           setData(response.data.data.data || []);
           setPagination(response.data.data.pagination || {});
-          onClose();
-        })
-      }
-
-    } catch (error) {
-      console.error(error);
-      onError(error.message);
-      onClose();
-    }
-  }
-
-  const fetchApiByResources = async (dataTrigger = false, onTrigger = () => { }) => {
-    const params = {
-      page,
-      search,
-      resources: project?.resources || [],
-      projectId: project?.id,
-    }
-
-    try {
-      if (!dataTrigger) {
-        onOpen();
-      }
-
-      const response = await apiGet(`/project-profiles/resources`, params);
-      console.log(response.data.data)
-
-      if (dataTrigger) {
-        delayApi(() => {
-          setData(response.data.data.data || []);
-          setPagination(response.data.data.pagination || {});
-          onTrigger();
-        })
-      }
-      else {
-        delayApi(() => {
-          setData(response.data.data.data || []);
-          setPagination(response.data.data.pagination || {});
+          setOpenningIds(new Set(response.data.data.browsers));
           onClose();
         })
       }
@@ -136,64 +106,8 @@ export default function ProjectProfileList({ project = {} }) {
       }
     }
 
-    const idsByResources = async () => {
-      const params = {
-        resources: project?.resources,
-        projectId: project?.id,
-      }
-
-      try {
-        onOpen();
-        const response = await apiGet(`/project-profiles/ids/resources`, params);
-        console.log(response.data.data)
-
-        delayApi(() => {
-          setSelected(response.data.data || []);
-          onClose();
-        })
-
-      } catch (error) {
-        console.error(error);
-        onError(error.message);
-        onClose();
-      }
-    }
-
-    if (isTabFree) {
-      idsByResources();
-    }
-    else {
-      idsByProject();
-    }
+    idsByProject();
   }, [selectedTab])
-
-  useEffect(() => {
-    console.log(selected)
-  }, [selected])
-
-  const joinProfiles = async () => {
-    const params = {
-      profile_ids: selected,
-      project_id: project?.id,
-    }
-
-    try {
-      showLoading();
-      const response = await apiPost("/project-profiles/multiple", params);
-      const data = response.data.data;
-      fetchApiByResources(true, () => {
-        const dataIds = data.map(item => item.profile_id);
-        const newSelected = selected.filter(id => !dataIds?.includes(id));
-        setSelected(newSelected);
-        onSuccess(`Tham gia dự án thành công!`);
-        swalClose();
-      })
-    } catch (error) {
-      console.error(error);
-      onError(error.message);
-      swalClose();
-    }
-  }
 
   const outProfiles = async () => {
     const params = {
@@ -231,42 +145,24 @@ export default function ProjectProfileList({ project = {} }) {
   }, [selected])
 
   const handleUpdateData = useCallback((id, onTrigger = () => { }) => {
-    if (isTabFree) {
-      fetchApiByResources(true, () => {
-        const newSelected = selected.filter(selected => selected !== id);
-        setSelected(newSelected);
-        onTrigger();
-      })
-    }
-    else {
-      fetchApiByProject(true, () => {
-        const newSelected = selected.filter(selected => selected !== id);
-        setSelected(newSelected);
-        onTrigger();
-      })
-    }
+    fetchApiByProject(true, () => {
+      // const newSelected = selected.filter(selected => selected !== id);
+      // setSelected(newSelected);
+      onTrigger();
+    })
   }, [
     search,
     page,
     selectedTab,
-    selected,
+    // selected,
   ]);
 
   const handleDeleteData = useCallback((id, onTrigger = () => { }) => {
-    if (isTabFree) {
-      fetchApiByResources(true, () => {
-        const newSelected = selected.filter(selected => selected !== id);
-        setSelected(newSelected);
-        onTrigger();
-      })
-    }
-    else {
-      fetchApiByProject(true, () => {
-        const newSelected = selected.filter(selected => selected !== id);
-        setSelected(newSelected);
-        onTrigger();
-      })
-    }
+    fetchApiByProject(true, () => {
+      const newSelected = selected.filter(selected => selected !== id);
+      setSelected(newSelected);
+      onTrigger();
+    })
   }, [
     search,
     page,
@@ -302,37 +198,75 @@ export default function ProjectProfileList({ project = {} }) {
     onChangePage(1);
   }
 
+  const handleAddOpenningId = useCallback((id) => {
+    setOpenningIds((prev) => new Set(prev).add(id));
+  }, [])
+
+  const handleAddOpenningIds = (ids = []) => {
+    const updatedOpenningIds = new Set([...openningIds, ...ids]);
+    setOpenningIds(updatedOpenningIds);
+  };
+
+  console.log(loadingIds)
+
+  const handleRemoveOpenningIds = (ids = []) => {
+    const updatedOpenningIds = new Set(openningIds);
+    ids?.forEach((id) => {
+      updatedOpenningIds.delete(id);
+    });
+    setOpenningIds(updatedOpenningIds);
+  };
+
+  const handleRemoveOpenningId = useCallback((id) => {
+    setOpenningIds((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
+  }, [])
+
+  const handleAddLoadingId = useCallback((id) => {
+    setLoadingIds((prev) => new Set(prev).add(id));
+  }, [])
+
+  const handleRemoveLoadingId = useCallback((id) => {
+    setLoadingIds((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
+  }, [])
+
   useEffect(() => {
-    if (isTabFree) {
-      fetchApiByResources();
-    }
-    else {
-      fetchApiByProject();
-    }
+    fetchApiByProject();
   }, [
     search,
     selectedTab,
     page,
   ])
 
+  useEffect(() => {
+    socket.on('profileIdClosed', (data) => {
+      handleRemoveOpenningId(data.id);
+      console.log(data.id)
+    });
+
+    return () => {
+      socket.off('profileIdClosed');
+    };
+  }, [socket]);
+
+  const [automation, setAutomation] = useState(task?.script_name ? true : false)
+
   return (
     <div className='overflow-hidden'>
-      <ProjectProfileFilterSearch
-        action={selected?.length > 0 && (isTabFree ?
-          <ButtonInfo
-            icon={<LogIn />}
-            title={`Tham gia`}
-            onClick={joinProfiles}
-          /> :
-          <ButtonOrange
-            icon={<LogOut />}
-            title={`Rời`}
-            onClick={outProfiles}
-          />
-        )
+      <TaskProfileFilterSearch
+        action={
+          <>
+          </>
         }
-        projectName={project?.name || ''}
         pagination={pagination || {}}
+        projectName={projectName}
 
         onClearAllSelectedItems={handleClearAllSelectedItems}
 
@@ -341,9 +275,19 @@ export default function ProjectProfileList({ project = {} }) {
 
         onChangeSelectedTab={handleChangeSelectedTab}
         selectedTab={selectedTab}
+
+        taskUrl={task?.url}
+
+        selected={selected}
+
+        onAddOpenningIds={handleAddOpenningIds}
+        onRemoveOpenningIds={handleRemoveOpenningIds}
+
+        loadingIds={loadingIds}
+        openningIds={openningIds}
       />
 
-      <ProjectProfileDataTableMemo
+      <TaskProfileDataTableMemo
         pagination={pagination}
         onChangePage={handleChangePage}
 
@@ -351,8 +295,9 @@ export default function ProjectProfileList({ project = {} }) {
         onUpdateData={handleUpdateData}
         onDeleteData={handleDeleteData}
 
-        projectId={project?.id}
-        resources={project?.resources || []}
+        taskId={task?.id}
+        taskUrl={task?.url}
+        // projectId={projectId}
 
         selected={selected}
         onSelectAllRows={handleSelectAllRows}
@@ -360,6 +305,14 @@ export default function ProjectProfileList({ project = {} }) {
 
         onSelectAllData={handleSelectAllData}
         onClearAllData={handleClearAllData}
+
+        openningIds={openningIds}
+        onAddOpenningId={handleAddOpenningId}
+        onRemoveOpenningId={handleRemoveOpenningId}
+
+        loadingIds={loadingIds}
+        onAddLoadingId={handleAddLoadingId}
+        onRemoveLoadingId={handleRemoveLoadingId}
       />
     </div>
   )

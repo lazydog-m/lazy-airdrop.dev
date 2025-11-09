@@ -62,7 +62,7 @@ export const createCodeTimeVN = () => {
   return `new Date().toLocaleTimeString("en-GB", { hour12: false, timeZone: "Asia/Ho_Chi_Minh" })`;
 };
 
-export const createCommentHeader = ({ action = '', description = '' }) => {
+export const createCommentHeader = ({ action = '', target = '', description = '' }) => {
 
   // Tách desc theo xuống dòng, trim khoảng trắng thừa
   const lines = description
@@ -79,13 +79,15 @@ export const createCommentHeader = ({ action = '', description = '' }) => {
   } else {
     desc = [
       "// 🎯 Description:",
-      ...lines.map(line => `//   👉 ${line}`)
+      ...lines.map(line => `//   💬 ${line}`)
     ].join("\n");
   }
 
   return [
-    `// ===== 🎬 ${action.toUpperCase()} =====`,
+    '// ────────────────────────────────',
+    `// 🎬 Action: ${action} 🡆 ${target}`,
     desc,
+    '// ────────────────────────────────',
   ].join("\n");
 }
 

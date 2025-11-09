@@ -174,54 +174,10 @@ export default function ProfileDataTable({
           />
         </TableCell>
         <TableCell align="left">
-          <span className='fw-500 font-inter'>
+          <span className='fw-500 font-inter text-too-long-auto'>
             {convertEmailToEmailUsername(row?.email)}
           </span>
         </TableCell>
-        {/*
-        <TableCell align="left">
-          <CopyButton
-            text={row.email}
-            copied={copied.id === row.id && copied.type === EMAIL_TYPE}
-            onCopy={(copied.id !== row.id || copied.type !== EMAIL_TYPE) ? () => handleCopyText(row.id, row.email, EMAIL_TYPE) : () => { }}
-          />
-        </TableCell>
-        <TableCell align="left">
-          <CopyButton
-            text={!row.email_password ? NOT_AVAILABLE : (copied.id === row.id && copied.type === EMAIL_PASSWORD_TYPE) ? row.email_password : getMasked(row.email_password)}
-            copied={copied.id === row.id && copied.type === EMAIL_PASSWORD_TYPE}
-            onCopy={(copied.id !== row.id || copied.type !== EMAIL_PASSWORD_TYPE) ? () => handleCopyText(row.id, row.email_password, EMAIL_PASSWORD_TYPE) : () => { }}
-          />
-        </TableCell>
-        <TableCell align="left">
-          <CopyButton
-            text={row.x_username || NOT_AVAILABLE}
-            copied={copied.id === row.id && copied.type === USERNAME_X_TYPE}
-            onCopy={(copied.id !== row.id || copied.type !== USERNAME_X_TYPE) ? () => handleCopyText(row.id, row.x_username, USERNAME_X_TYPE) : () => { }}
-          />
-        </TableCell>
-        <TableCell align="left">
-          <CopyButton
-            text={row.discord_username || NOT_AVAILABLE}
-            copied={copied.id === row.id && copied.type === USERNAME_DISCORD_TYPE}
-            onCopy={(copied.id !== row.id || copied.type !== USERNAME_DISCORD_TYPE) ? () => handleCopyText(row.id, row.discord_username, USERNAME_DISCORD_TYPE) : () => { }}
-          />
-        </TableCell>
-        <TableCell align="left">
-          <CopyButton
-            text={!row.discord_password ? NOT_AVAILABLE : (copied.id === row.id && copied.type === DISCORD_PASSWORD_TYPE) ? row.discord_password : getMasked(row.discord_password)}
-            copied={copied.id === row.id && copied.type === DISCORD_PASSWORD_TYPE}
-            onCopy={(copied.id !== row.id || copied.type !== DISCORD_PASSWORD_TYPE) ? () => handleCopyText(row.id, row.discord_password, DISCORD_PASSWORD_TYPE) : () => { }}
-          />
-        </TableCell>
-        <TableCell align="left">
-          <CopyButton
-            text={row.telegram_phone || NOT_AVAILABLE}
-            copied={copied.id === row.id && copied.type === TELEGRAM_PHONE_TYPE}
-            onCopy={(copied.id !== row.id || copied.type !== TELEGRAM_PHONE_TYPE) ? () => handleCopyText(row.id, row.telegram_phone, TELEGRAM_PHONE_TYPE) : () => { }}
-          />
-        </TableCell>
-*/}
         <TableCell align="left">
           <div
             className='items-center d-flex select-none'
@@ -264,36 +220,6 @@ export default function ProfileDataTable({
 
         <TableCell align="left" style={{ userSelect: '-moz-none' }}>
           <div className='d-flex gap-30'>
-            {/* <div */}
-            {/*   className='d-flex gap-8 pdi-13 pdb-8 font-inter button-close-profile pointer' */}
-            {/*   onClick={() => handleCloseProfile(row.id)} */}
-            {/*   style={{ */}
-            {/*     opacity: loadingIds.has(row.id) ? '0.5' : '1', */}
-            {/*     pointerEvents: loadingIds.has(row.id) ? 'none' : '', */}
-            {/*   }} */}
-            {/* > */}
-            {/*   {loadingIds.has(row.id) ? <Loader className="animate-spin" /> : <Chrome size={'18px'} />} */}
-            {/**/}
-            {/*   <span className='mt-0 fw-500'> */}
-            {/*     Close */}
-            {/*   </span> */}
-            {/* </div> */}
-            {/**/}
-            {/* <div */}
-            {/*   className='d-flex gap-8 pdi-13 pdb-8 font-inter button-open-profile pointer' */}
-            {/*   onClick={() => handleOpenProfile(row.id)} */}
-            {/*   style={{ */}
-            {/*     opacity: loadingIds.has(row.id) ? '0.5' : '1', */}
-            {/*     pointerEvents: loadingIds.has(row.id) ? 'none' : '', */}
-            {/*   }} */}
-            {/* > */}
-            {/*   {loadingIds.has(row.id) ? <Loader className="animate-spin" /> : <Chrome size={'18px'} />} */}
-            {/**/}
-            {/*   <span className='mt-0 fw-500'> */}
-            {/*     Open */}
-            {/*   </span> */}
-            {/* </div> */}
-
             <div className='d-flex ms-20'>
               <ButtonIcon
                 onClick={() => handleClickOpen(row)}
@@ -396,10 +322,3 @@ export default function ProfileDataTable({
     </>
   );
 }
-
-const EMAIL_TYPE = 'EMAIL_TYPE';
-const EMAIL_PASSWORD_TYPE = 'EMAIL_PASSWORD_TYPE';
-const USERNAME_X_TYPE = 'USERNAME_X_TYPE';
-const USERNAME_DISCORD_TYPE = 'USERNAME_DISCORD_TYPE';
-const DISCORD_PASSWORD_TYPE = 'DISCORD_PASSWORD_TYPE';
-const TELEGRAM_PHONE_TYPE = 'TELEGRAM_PHONE_TYPE';

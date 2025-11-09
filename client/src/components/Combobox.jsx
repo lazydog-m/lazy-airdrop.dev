@@ -1,9 +1,10 @@
-import { Check, ChevronsUpDownIcon } from "lucide-react"
+import { Check, ChevronsUpDownIcon, CircleX, X } from "lucide-react"
 
 import Popover from "./Popover"
 import { ButtonOutline } from "./Button"
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from './ui/input';
+import useDebounce from "@/hooks/useDebounce";
 
 export default function Combobox({
   value = '',
@@ -12,6 +13,9 @@ export default function Combobox({
   placeholder,
   placeholderSearch = '',
   capitalize = true,
+  convertItem,
+  onChangeSearch = () => { },
+  searchApi = false,
 }) {
 
   const [inputValue, setInputValue] = useState("");
@@ -20,21 +24,40 @@ export default function Combobox({
   const wrapperRef = useRef(null);
   const dropdownRef = useRef(null);
 
+  const debounceValue = useDebounce(inputValue, 500);
+
   useEffect(() => {
-    const filtered = items?.filter(item =>
-      item?.toLowerCase()?.includes(inputValue?.toLowerCase())
-    );
-    setFilteredSuggestions(filtered);
+    onChangeSearch(debounceValue);
+  }, [debounceValue]);
+
+  useEffect(() => {
+    setFilteredSuggestions(items);
   }, [items])
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
 
-    const filtered = items?.filter(item =>
-      item?.toLowerCase()?.includes(value?.toLowerCase())
-    );
-    setFilteredSuggestions(filtered);
+    if (!searchApi) {
+      let filtered = [];
+      if (convertItem) {
+        const convertedItems = items.map(item => {
+          return {
+            id: item,
+            name: convertItem(item),
+          }
+        }
+        );
+        filtered = convertedItems?.filter(item =>
+          item?.name?.toLowerCase()?.includes(value?.toLowerCase()))
+        setFilteredSuggestions(filtered.map(item => item?.id));
+      }
+      else {
+        filtered = items?.filter(item =>
+          item?.toLowerCase()?.includes(value?.toLowerCase()))
+        setFilteredSuggestions(filtered);
+      }
+    }
   }
 
   const handleChangeSelected = (newValue) => {
@@ -84,13 +107,27 @@ export default function Combobox({
       modal={true}
       trigger={
         <ButtonOutline
-          className={`button-outlined-combobox ${value ? `${capitalize && 'text-capitalize'} color-white` : 'text-gray'} mt-10 font-inter w-full fw-400 justify-between select-none font-inter pointer h-40 fs-14 d-flex`}
+          className={`pdi-11 button-outlined-combobox ${value ? `${capitalize && 'text-capitalize'} color-white` : 'text-gray'} mt-10 font-inter w-full fw-400 justify-between select-none font-inter pointer h-40 fs-14 d-flex`}
           role="combobox"
           type='button'
           title={
             <>
-              {value ? value : placeholder}
-              <ChevronsUpDownIcon color="#999998" />
+              {value ? (convertItem ? convertItem(value) : value) : placeholder}
+              <span className="flex items-center gap-10">
+                {value &&
+                  <button
+                    type="button"
+                    className="x-modal cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onChange("");
+                    }}
+                  >
+                    <X />
+                  </button>
+                }
+                <ChevronsUpDownIcon color="#999998" />
+              </span>
             </>
           }
         />
@@ -116,7 +153,7 @@ export default function Combobox({
                   }}
                 >
                   <span className={`d-flex gap-10 align-items-center ${capitalize && 'text-capitalize'}`}>
-                    {item}
+                    {convertItem ? convertItem(item) : item}
                   </span>
                   {value === item && <Check size={'16px'} />}
                 </li>

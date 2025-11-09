@@ -87,6 +87,7 @@ iframe#webpack-dev-server-client-overlay {
   --green: #2EAD33;
   --red: #E2574C;
   --color: linear-gradient(45deg, #E2574C, #2EAD33);
+  --bg-color-primary-dark: linear-gradient(45deg, #230b0a, #041607);
   --color-hover: linear-gradient(45deg, #D64F45, #2AA730);
   --hover-row-table: #1F1F1F;
   --table-head: #1A1A1A;
@@ -1098,6 +1099,17 @@ body {
   background: var(--color-hover);
 }
 
+.button-outline-orange {
+  color: var(--error);
+  background-color: var(--bg);
+  border-radius: 0px !important;
+  border: 1px solid var(--error) !important;
+}
+
+.button-outline-orange:hover {
+  background-color: #372926;
+}
+
 .button-orange {
   color: white;
   background-color: #D45D55;
@@ -1106,6 +1118,12 @@ body {
 
 .button-orange:hover {
   background-color: #BF544D;
+}
+
+.button-success {
+  color: white;
+  background-color: var(--success);
+  border-radius: 0px !important;
 }
 
 .button-info {
@@ -1748,6 +1766,36 @@ body {
   /* Thêm dấu ... */
 }
 
+.text-too-long-300 {
+  vertical-align: middle;
+  /* Căn text về giữa theo chiều dọc */
+  display: inline-block;
+  /* Thay đổi từ block sang inline-block */
+  max-width: 300px;
+  /* Đặt chiều rộng phù hợp */
+  white-space: nowrap;
+  /* Ngăn không cho xuống dòng */
+  overflow: hidden;
+  /* Ẩn phần văn bản bị tràn */
+  text-overflow: ellipsis;
+  /* Thêm dấu ... */
+}
+
+.text-too-long-480- {
+  vertical-align: middle;
+  /* Căn text về giữa theo chiều dọc */
+  display: inline-block;
+  /* Thay đổi từ block sang inline-block */
+  max-width: 480px;
+  /* Đặt chiều rộng phù hợp */
+  white-space: nowrap;
+  /* Ngăn không cho xuống dòng */
+  overflow: hidden;
+  /* Ẩn phần văn bản bị tràn */
+  text-overflow: ellipsis;
+  /* Thêm dấu ... */
+}
+
 .text-too-long-auto {
   vertical-align: middle;
   /* Căn text về giữa theo chiều dọc */
@@ -2331,7 +2379,11 @@ body {
 }
 
 .active-logic {
+  border-width: 1px !important;
+  border-style: solid;
+  /* border-image: linear-gradient(to right, var(--red), var(--green)) 1 !important; */
   border: 1px solid var(--primary) !important;
+  /* background: var(--bg-color-primary-dark); */
   background-color: #262F37;
   color: white !important;
 }
@@ -2393,6 +2445,17 @@ body {
   }
 }
 
+.x-select {
+  cursor: pointer;
+  color: #fff;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
 .x-modal {
   cursor: pointer;
   color: #fff;
@@ -2429,7 +2492,7 @@ body {
 }
 
 .logic-items-icon {
-  background-color: var(--bg-light);
+  background-color: var(--bg);
   border: 1px solid var(--border)
 }
 
@@ -2709,21 +2772,10 @@ body {
   background-color: var(--border);
 }
 
-.button-open-profile {
-  background: var(--color);
+.custom-group-input:focus {
+  border: 1px solid var(--focus) !important;
 }
 
-.button-open-profile:hover {
-  background: var(--color-hover);
-}
-
-.button-close-profile {
-  border: 1px solid var(--error);
-  color: var(--error);
-  transition: linear 0.3s;
-}
-
-.button-close-profile:hover {
-  background: var(--error);
-  color: white;
+.custom-group-input {
+  padding-block: 7px !important;
 }

@@ -5,8 +5,24 @@ const RestApiException = require('../exceptions/RestApiException');
 const { Sequelize, Op, QueryTypes } = require('sequelize');
 const Profile = require('../models/profile');
 const sequelize = require('../configs/dbConnection');
-const { Pagination, StatusCommon, WEB3_WALLET_RESOURCE_IDS } = require('../enums');
-const { openProfile, browsers, currentProfiles, closingByApiIds, delay, getPortFree, usedPorts, getBrowsers, addBrowser, removeBrowserById, sortGridLayout } = require('../utils/playwrightUtil');
+const {
+  Pagination,
+  StatusCommon,
+  WEB3_WALLET_RESOURCE_IDS
+} = require('../enums');
+const {
+  openProfile,
+  browsers,
+  currentProfiles,
+  closingByApiIds,
+  delay,
+  getPortFree,
+  usedPorts,
+  getBrowsers,
+  addBrowser,
+  removeBrowserById,
+  sortGridLayout
+} = require('../utils/playwrightUtil');
 const { convertArr } = require('../utils/convertUtil');
 
 const profileSchema = Joi.object({
@@ -468,7 +484,10 @@ const validateStatus = (data) => {
   return value;
 };
 
-const openProfileById = async (id) => {
+const openProfileById = async (req) => {
+
+  const { id } = req.params;
+  const { url } = req.query;
 
   const profileData = await getProfileById(id);
 
@@ -488,6 +507,13 @@ const openProfileById = async (id) => {
     profile,
     port,
   });
+
+  if (url) {
+    // muốn bắt lỗi nhưng không muốn block api => catch bắt lỗi nội bộ
+    page.goto(url).catch((error) => {
+      console.error("❌ Có lỗi khi chạy url:", error);
+    });
+  }
 
   return profile.id;
 };
@@ -513,7 +539,9 @@ const sortProfileLayouts = async () => {
   await sortGridLayout();
 }
 
-const openProfilesByIds = async (ids = []) => {
+const openProfilesByIds = async (req) => {
+  const { ids, url } = req.query;
+
   //1 2 3 4     // 1 2 dang mo ko lay => lay 3,4 chua dc mo
   const filteredIds = ids?.filter((id) => !currentProfiles().includes(id));
 
@@ -539,6 +567,14 @@ const openProfilesByIds = async (ids = []) => {
         try {
           const { context, page, chrome } = await openProfile({ profile, port });
           addBrowser({ context, page, chrome, profile, port });
+
+          if (url) {
+            // muốn bắt lỗi nhưng không muốn block api => catch bắt lỗi nội bộ
+            page.goto(url).catch((error) => {
+              console.error("❌ Có lỗi khi chạy url:", error);
+            });
+          }
+
           resolve();
         } catch (err) {
           reject(err); // 1 reject sẽ failed all promises => not return ids

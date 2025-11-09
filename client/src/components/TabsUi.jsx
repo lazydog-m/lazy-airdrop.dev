@@ -28,24 +28,31 @@ export const TabsUi = ({
               className='pointer font-inter fw-500 select-none
               h-full bdr border-b-3
               transition-all duration-200 ease-in-out
+              gap-1
               '
               style={{
                 borderColor: selectedTab === tab?.value ? '#ffffff' : '#323230',
                 backgroundColor: selectedTab === tab?.value ? '#404040' : '#202020'
               }}
             >
-              <span className="flex gap-10 items-center">
-                <span className='gap-7 d-flex text-capitalize items-center'>
-                  {tab?.icon}
-                  {tab?.name}
-                </span>
-                <Badge
-                  className='h-5 border-none !shadow-none min-w-5.5 rounded-full px-1 flex justify-center tabular-nums'
-                // style={{ backgroundColor: Color.PRIMARY }}
+              <span className='gap-7 d-flex text-capitalize items-center'>
+                {tab?.icon}
+                {tab?.name}
+              </span>
+              <svg width="24.5" height="24">
+                <circle cx="12" cy="12" r="10" fill="white" />
+                <text
+                  x="50%"
+                  y="50%"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fill="black"
+                  fontSize="13"
+                  fontWeight='700'
                 >
                   {tab?.total || 0}
-                </Badge>
-              </span>
+                </text>
+              </svg>
             </TabsTrigger>
           ))}
         </TabsList>

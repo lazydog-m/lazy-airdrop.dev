@@ -65,6 +65,7 @@ function Autocomplete({
     onChange(suggestion);
     setFilteredSuggestions([]);
     setIsDropdownVisible(false);
+    setHighlightedIndex(-1);
   };
 
   const handleSuggestionMouseDown = (e) => {

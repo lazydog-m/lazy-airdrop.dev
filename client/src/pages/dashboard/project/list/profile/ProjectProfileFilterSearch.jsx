@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
-import { ListFilter, UserLock, UserRoundCheck, UserRoundMinus, UserRoundSearch, UserRoundX } from 'lucide-react';
+import { ListFilter, UserLock, UserRoundCheck, UserRoundMinus, UserRoundSearch, UserRoundX, Users } from 'lucide-react';
 import { ButtonGhost } from '@/components/Button';
-import { Color } from '@/enums/enum';
+import { Color, StatusCommon } from '@/enums/enum';
 import useDebounce from '@/hooks/useDebounce';
 import { TabsUi } from '@/components/TabsUi';
 import TooltipUi from '@/components/TooltipUi';
 import InputUi from '@/components/InputUi';
 import { LiaUserLockSolid } from "react-icons/lia";
+import { convertStatusCommonEnumToText } from '@/utils/convertUtil';
 
 export default function ProjectProfileFilterSearch({
   selectedTab,
@@ -46,22 +47,22 @@ export default function ProjectProfileFilterSearch({
 
   const tabs = [
     {
-      name: `Đã tham gia`,
-      value: "joined",
-      total: pagination?.totalItemsJoined || 0,
+      name: convertStatusCommonEnumToText(StatusCommon.IN_ACTIVE),
+      value: StatusCommon.IN_ACTIVE,
+      total: pagination?.totalItemsActive || 0,
       icon: <UserRoundCheck size={17} />
+    },
+    {
+      name: convertStatusCommonEnumToText(StatusCommon.UN_ACTIVE),
+      value: StatusCommon.UN_ACTIVE,
+      total: pagination?.totalItemsUnActive || 0,
+      icon: <UserRoundX size={17} />
     },
     {
       name: `Chưa tham gia`,
       value: "free",
       total: pagination?.totalItemsFree || 0,
       icon: <UserRoundMinus size={17} />
-    },
-    {
-      name: `Ngừng hoạt động`,
-      value: "un_active",
-      total: pagination?.totalItemsJoinedDisabled || 0,
-      icon: <UserRoundX size={17} />
     },
   ];
 
@@ -81,7 +82,7 @@ export default function ProjectProfileFilterSearch({
             value={filterSearch}
             onChange={(event) => setFilterSearch(event.target.value)}
           />
-          {search &&
+          {filterSearch &&
             <ButtonGhost
               icon={<ListFilter color={Color.ORANGE} />}
               onClick={clearAll}
@@ -94,8 +95,9 @@ export default function ProjectProfileFilterSearch({
                 items-center border-none inline-flex select-none gap-0 h-40 bg-color-light pdi-15 border-primary-2
                 '
           >
-            <div className='fs-13 fw-500 flex items-center'>
-              {`${projectName} 100,000 Points`}
+            <div className='fs-13 fw-500 flex gap-1'>
+              <Users size={18} />
+              {`100 - 100,000 Points`}
             </div>
           </div>
           {action}

@@ -121,11 +121,13 @@ export default function Web3WalletDataTable({
           />
         </TableCell>
         <TableCell align="left">
-          <span className='font-inter d-flex color-white fw-500 items-center gap-8'>
+          <span className='font-inter flex color-white fw-500 items-center gap-8'>
             {row?.resource_id &&
               <ResourceIcon id={row?.resource_id} className='mb-0.5' />
             }
-            {`${row?.name} (${row?.count})`}
+            <span className=' text-too-long-auto'>
+              {`${row?.name}`}
+            </span>{`(${row?.count})`}
           </span>
         </TableCell>
         <TableCell align="left">

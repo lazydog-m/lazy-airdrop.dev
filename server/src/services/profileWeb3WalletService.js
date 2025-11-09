@@ -108,19 +108,21 @@ const createProfileWeb3Wallet = async (body) => {
   const {
     profile_id,
     wallet_id,
-    wallet_name
   } = body;
   const data = validateProfileWeb3Wallet(body);
 
   await getProfileById(profile_id);
   await getWeb3WalletById(wallet_id);
 
-  const profileWeb3WalletExists = await sequelize.query(queryProfileWeb3WalletExists, {
-    replacements: { profileId: profile_id, walletId: wallet_id }
+  const profileWeb3WalletExists = await sequelize.query(queryAddProfileWeb3WalletExists, {
+    replacements: {
+      profileId: profile_id,
+      walletId: wallet_id
+    }
   });
 
   if (profileWeb3WalletExists[0].length > 0) {
-    throw new RestApiException(`Ví Web3 ${wallet_name} đã tồn tại trong hồ sơ này!`);
+    throw new RestApiException(`Ví Web3 đã tồn tại trong hồ sơ này!`);
   }
 
   const createdProfileWeb3Wallet = await ProfileWeb3Wallet.create({
@@ -134,7 +136,6 @@ const updateProfileWeb3Wallet = async (body) => {
   const {
     id,
     profile_id,
-    wallet_name,
     wallet_id,
   } = body;
   const data = validateProfileWeb3Wallet(body);
@@ -142,7 +143,7 @@ const updateProfileWeb3Wallet = async (body) => {
   await getProfileById(profile_id);
   await getWeb3WalletById(wallet_id);
 
-  const profileWeb3WalletExists = await sequelize.query(queryProfileWeb3WalletExists, {
+  const profileWeb3WalletExists = await sequelize.query(queryUpdateProfileWeb3WalletExists, {
     replacements: {
       profileId: profile_id,
       walletId: wallet_id,
@@ -151,7 +152,7 @@ const updateProfileWeb3Wallet = async (body) => {
   });
 
   if (profileWeb3WalletExists[0].length > 0) {
-    throw new RestApiException(`Ví Web3 ${wallet_name} đã tồn tại trong hồ sơ này!`);
+    throw new RestApiException(`Ví Web3 đã tồn tại trong hồ sơ này!`);
   }
 
   const [updatedCount] = await ProfileWeb3Wallet.update({
@@ -197,12 +198,20 @@ const validateProfileWeb3Wallet = (data) => {
   return value;
 };
 
-const queryProfileWeb3WalletExists = `
+const queryUpdateProfileWeb3WalletExists = `
   SELECT pw.id FROM profile_web3_wallets pw
   WHERE pw.profile_id = :profileId
   AND pw.wallet_id = :walletId
   AND pw.deletedAt IS NULL
   AND pw.id != :id
+  LIMIT 1;
+`;
+
+const queryAddProfileWeb3WalletExists = `
+  SELECT pw.id FROM profile_web3_wallets pw
+  WHERE pw.profile_id = :profileId
+  AND pw.wallet_id = :walletId
+  AND pw.deletedAt IS NULL
   LIMIT 1;
 `;
 

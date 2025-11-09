@@ -24,12 +24,12 @@ export default function ProfileWeb3WalletNewEditForm({ isEdit, currentProfileWeb
       .trim().required('Địa chỉ ví không được để trống!'),
     secret_phrase: Yup.string()
       .trim().required('Secret phrase không được để trống!'),
-    wallet_name: Yup.string()
+    wallet_id: Yup.string()
       .trim().required('Chưa chọn ví Web3!'),
   });
 
   const defaultValues = {
-    wallet_name: currentProfileWeb3Wallet?.name || '',
+    wallet_id: currentProfileWeb3Wallet?.wallet_id || '',
     wallet_address: currentProfileWeb3Wallet?.wallet_address || '',
     secret_phrase: currentProfileWeb3Wallet?.secret_phrase || '',
   };
@@ -56,8 +56,6 @@ export default function ProfileWeb3WalletNewEditForm({ isEdit, currentProfileWeb
         ...data,
         id: currentProfileWeb3Wallet.id,
         profile_id: currentProfileWeb3Wallet.profile_id,
-        wallet_id: findWalletIdByName(data.wallet_name),
-        need_check_wallet_id: data.wallet_name !== currentProfileWeb3Wallet.name, // ví chọn khác ví hiện tại
       }
       showConfirm("Xác nhận cập nhật ví Web3 của profile?", () => put(body));
     }
@@ -65,7 +63,6 @@ export default function ProfileWeb3WalletNewEditForm({ isEdit, currentProfileWeb
       const body = {
         ...data,
         profile_id: profileId,
-        wallet_id: findWalletIdByName(data.wallet_name),
       }
       console.log(body)
       showConfirm("Xác nhận thêm ví Web3 vào profile?", () => post(body));
@@ -109,7 +106,7 @@ export default function ProfileWeb3WalletNewEditForm({ isEdit, currentProfileWeb
   useEffect(() => {
     const fetch = async () => {
       try {
-        const response = await apiGet("/web3-wallets/no-page");
+        const response = await apiGet("/web3-wallets/active");
         setWallets(response.data.data || []);
         console.log(response.data.data)
       } catch (error) {
@@ -122,21 +119,13 @@ export default function ProfileWeb3WalletNewEditForm({ isEdit, currentProfileWeb
     fetch();
   }, [])
 
-  const findWalletNameByWalletId = (walletId) => {
-    return wallets?.find((item) => item?.id === walletId)?.name;
-  }
-
-  const findWalletIdByName = (name) => {
-    return wallets?.find((item) => item?.name === name)?.id;
-  }
-
   return (
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Row className='mt-5' gutter={[25, 20]} >
 
         <Col span={24}>
           <Controller
-            name='wallet_name'
+            name='wallet_id'
             control={control}
             render={({ field, fieldState: { error } }) => (
               <>
@@ -148,7 +137,8 @@ export default function ProfileWeb3WalletNewEditForm({ isEdit, currentProfileWeb
                   value={field.value}
                   placeholder='Chọn ví Web3'
                   placeholderSearch="ví Web3"
-                  items={wallets.map((item) => item?.name)}
+                  items={wallets.map((item) => item?.id)}
+                  convertItem={(id) => wallets?.find(item => item?.id === id)?.name}
                   onChange={(value) => field.onChange(value)}
                 />
                 <ErrorMessage message={error?.message} />

@@ -9,20 +9,19 @@ import { HeaderBack } from "@/components/HeaderSection";
 import { PATH_DASHBOARD } from "@/routes/path";
 import ScriptNewEditDetails from './ScriptNewEditDetails';
 import { delayApi } from '@/utils/commonUtil';
-import { ButtonDanger, ButtonInfo, ButtonOutline, ButtonOutlinePrimary, ButtonOutlineInfo, ButtonPrimary } from '@/components/Button';
+import { ButtonInfo, ButtonOutline, ButtonOutlineInfo, ButtonPrimary, ButtonOrange, ButtonOutlineOrange } from '@/components/Button';
 import { Chrome, CirclePlay, Code, Loader, Logs, Save } from 'lucide-react';
 import Modal from '@/components/Modal';
 import ScriptNewEditForm from './ScriptNewEditForm';
 import useMessage from '@/hooks/useMessage';
 import { Drawer } from 'antd';
 import { Badge } from '@/components/ui/badge';
-import { darkenColor, lightenColor } from '@/utils/convertUtil';
-import { Color } from '@/enums/enum';
 import ScriptPreviewCode from './ScriptPreviewCode';
 import ScriptLogs from './ScriptLogs';
 import { BROWSER } from './actions/browser/Browser';
 import { WEB_INTERACTION } from './actions/web-interaction/WebInteraction';
 import useSocket from '@/hooks/useSocket';
+import { BadgePrimaryOutline } from '@/components/Badge';
 
 const ScriptNewEditDetailsMemo = React.memo(ScriptNewEditDetails);
 
@@ -33,13 +32,11 @@ const ACTIONS_DATA = [
 
 export default function ScriptNewEdit() {
 
-  const { name } = useParams();
+  const { id } = useParams();
   const location = useLocation();
   const isEdit = location.pathname.includes('edit');
   const [data, setData] = useState({
-    code: '',
     logicItems: [],
-    fileName: '',
   });
   const [logs, setLogs] = useState([]);
   const { onOpen, onClose } = useSpinner();
@@ -86,19 +83,38 @@ export default function ScriptNewEdit() {
     const fetch = async () => {
       onOpen();
       try {
-        const response = await apiGet(`/scripts/${name}`);
+        const response = await apiGet(`/scripts/${id}`);
         delayApi(() => {
           const res = response.data.data;
-          const logicItems = res.logicItems;
+          const logicItems = res?.data?.logicItems;
           const updatedLogicItems = handleUpdateLogicItemsFromRes(logicItems);
           const data = {
-            ...res,
+            ...res?.data,
             logicItems: updatedLogicItems,
             code: getAllCode(updatedLogicItems),
           }
 
           setData(data || {});
-          console.log(data);
+          setOpenningProfile(res?.profileTestOpenning)
+          console.log(res);
+          onClose();
+        })
+      } catch (error) {
+        console.error(error);
+        onError(error.message)
+        onClose();
+      }
+    }
+
+    const fetchCurrentProfileTest = async () => {
+      onOpen();
+      try {
+        const response = await apiGet(`/scripts/profile-test/current`);
+        delayApi(() => {
+          const res = response.data.data;
+
+          setOpenningProfile(res)
+          console.log(res);
           onClose();
         })
       } catch (error) {
@@ -111,7 +127,10 @@ export default function ScriptNewEdit() {
     if (isEdit) {
       fetch();
     }
-  }, [name]) // nagivate
+    else {
+      fetchCurrentProfileTest();
+    }
+  }, [id]) // nagivate
 
   const getAllCode = (logicItems) => logicItems
     ?.map(item => item.code)
@@ -133,13 +152,14 @@ export default function ScriptNewEdit() {
 
   const runScript = async () => {
     const params = {
-      code: data.code,
+      codes: data?.logicItems?.map(item => item?.code),
     }
 
     try {
-      setOpenLogs(true);
       setLoadingScript(true);
+      setLogs([]);
       const response = await apiGet(`/scripts/run-script/test`, params);
+      setOpenLogs(true);
       setLoadingScript(false);
       setRunningScript(true);
       setOpenningProfile(true);
@@ -190,12 +210,11 @@ export default function ScriptNewEdit() {
     }
   }
 
-  useEffect(() => { // tai sao dung context, ko dung co chay socket duoc ko
+  useEffect(() => { // tai sao dung context, ko dung co chay socket duoc ko !!!
     socket.on('profileTestClosed', (data) => {
       const openning = data.closed;
       setOpenningProfile(!openning);
       setRunningScript(false);
-      // setLoadingScript(false);
     });
 
     return () => {
@@ -226,8 +245,12 @@ export default function ScriptNewEdit() {
     };
   }, [socket]);
 
+  const handleChangeScriptName = (name) => {
+    setScriptName(name);
+  };
+
   return (
-    <Page title={isEdit ? `Script - Cập nhật - ${name}` : `Script - Tạo mới`}>
+    <Page title={isEdit ? `Script ${data?.name ? ` - ${data?.name}` : ''}` : `Script - Tạo mới`}>
       <Container>
         <HeaderBack
           heading={
@@ -235,19 +258,13 @@ export default function ScriptNewEdit() {
               <span>
                 {isEdit ? `Cập nhật script` : `Tạo script`}
               </span>
-              {isEdit ?
-                <Badge
-                  className='custom-badge select-none bdr color-primary'
-                  style={{
-                    // backgroundColor: `${darkenColor(Color.PRIMARY)}`,
-                    color: 'white',
-                    // borderColor: `black`,
-                  }}
+              {(isEdit && data?.name) ?
+                <BadgePrimaryOutline
                 >
-                  <span className='text-too-long-auto'>
-                    {data.fileName}
+                  <span className='text-too-long-400'>
+                    {data?.name} {data?.project_name && `(${data?.project_name})`}
                   </span>
-                </Badge>
+                </BadgePrimaryOutline>
                 :
                 scriptName?.trim() !== '' ?
                   <Badge
@@ -258,7 +275,7 @@ export default function ScriptNewEdit() {
                       borderColor: `white`,
                     }}
                   >
-                    <span className='text-too-long-auto'>
+                    <span className='text-too-long-400'>
                       {scriptName}
                     </span>
                   </Badge> : null}
@@ -268,14 +285,14 @@ export default function ScriptNewEdit() {
           actions={
             <>
               {(openningProfile) ?
-                <ButtonOutlinePrimary
+                <ButtonOutlineOrange
                   onClick={closeProfile}
                   style={{
-                    opacity: loadingProfile ? '0.5' : '1',
-                    pointerEvents: loadingProfile ? 'none' : '',
+                    opacity: loadingProfile || loadingScript ? '0.5' : '1',
+                    pointerEvents: loadingProfile || loadingScript ? 'none' : '',
                   }}
                   icon={loadingProfile ? <Loader className="animate-spin" /> : <Chrome />}
-                  title='Đóng'
+                  title='Close'
                 />
                 :
                 <ButtonOutlineInfo
@@ -285,19 +302,23 @@ export default function ScriptNewEdit() {
                     pointerEvents: loadingProfile || loadingScript ? 'none' : '',
                   }}
                   icon={loadingProfile ? <Loader className="animate-spin" /> : <Chrome />}
-                  title='Mở'
+                  title='Open'
                 />
               }
               {runnningScript ?
-                <ButtonDanger
-                  icon={<CirclePlay />}
-                  title='Dừng'
+                <ButtonOrange
+                  icon={loadingScript ? <Loader className="animate-spin" /> : <CirclePlay />}
+                  title='Stop'
                   onClick={stopScript}
+                  style={{
+                    opacity: loadingScript ? '0.5' : '1',
+                    pointerEvents: loadingScript ? 'none' : '',
+                  }}
                 />
                 :
                 <ButtonInfo
                   icon={loadingScript ? <Loader className="animate-spin" /> : <CirclePlay />}
-                  title='Chạy'
+                  title='Run'
                   onClick={runScript}
                   style={{
                     opacity: (loadingScript || loadingProfile || data?.logicItems?.length <= 0) ? '0.5' : '1',
@@ -360,15 +381,14 @@ export default function ScriptNewEdit() {
           content={
             <ScriptNewEditForm
               currentScript={data}
-              onOpenScript={(isOpen) => setOpenScript(isOpen)}
-              onChangeScriptName={(name) => setScriptName(name)}
+              onChangeScriptName={handleChangeScriptName}
               isEdit={isEdit}
             />
           }
         />
 
         <ScriptNewEditDetailsMemo
-          currentLogicItems={data.logicItems || []}
+          currentLogicItems={data?.logicItems || []}
           onUpdateData={handleUpdateLogicItems}
           actionData={ACTIONS_DATA}
         />

@@ -6,7 +6,7 @@ import Popover from "@/components/Popover";
 import { ButtonGhost, ButtonOutlineTags } from '@/components/Button';
 import { Color, WalletStatus } from '@/enums/enum';
 import { Badge } from '@/components/ui/badge';
-import { darkenColor, lightenColor } from '@/utils/convertUtil';
+import { convertStatusCommonEnumToColorHex, convertStatusCommonEnumToText, darkenColor, lightenColor } from '@/utils/convertUtil';
 import useDebounce from '@/hooks/useDebounce';
 import InputUi from '@/components/InputUi';
 
@@ -44,7 +44,6 @@ export default function ScriptFilterSearch({
         />
 
         <div className="filters-button d-flex gap-10">
-          {/*
           <Popover className='button-dropdown-filter-checkbox'
             trigger={
               <ButtonOutlineTags
@@ -53,14 +52,18 @@ export default function ScriptFilterSearch({
                 className='button-outlined font-inter pointer color-white h-40 fs-13 d-flex'
                 selected={selectedStatusItems}
                 tags={
-                  <Tags selectedItems={selectedStatusItems} style={convertWalletStatusEnumToColorHex} convert={convertWalletStatusEnumToText} />
+                  <Tags
+                    selectedItems={selectedStatusItems}
+                    style={convertStatusCommonEnumToColorHex}
+                    convert={convertStatusCommonEnumToText}
+                  />
 
                 }
               />
             }
             content={
-              <CheckboxItems
-                convert={convertWalletStatusEnumToText}
+              <DropdownCheckboxMenu
+                convert={convertStatusCommonEnumToText}
                 items={statusFilters.items}
                 selectedItems={selectedStatusItems}
                 onChangeSelectedItems={onChangeSelectedStatusItems}
@@ -68,10 +71,8 @@ export default function ScriptFilterSearch({
               />
             }
           />
-          */}
 
-          {/* {(selectedStatusItems.length > 0 || search) && */}
-          {(search) &&
+          {(selectedStatusItems.length > 0 || filterSearch) &&
             <ButtonGhost
               icon={<ListFilter color={Color.ORANGE} />}
               onClick={clearAll}

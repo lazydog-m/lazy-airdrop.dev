@@ -17,14 +17,15 @@ import { ErrorMessage } from "@/components/ErrorMessage";
 import Combobox from "@/components/Combobox";
 import Autocomplete from "@/components/Autocomplete";
 import { parseNumber } from "@/utils/convertUtil";
+import { TaskType } from "@/enums/enum";
 
 export default function ProjectTaskNewEditForm({
   onCloseModal,
   isEdit,
   currentTask,
   onUpdateData,
-  projectName,
-  projectId
+  projectId,
+  selectedTaskTab,
 }) {
 
   const TaskSchema = Yup.object().shape({
@@ -36,9 +37,7 @@ export default function ProjectTaskNewEditForm({
     name: currentTask?.name || '',
     points: currentTask?.points || '', // null
     url: currentTask?.url || '',
-    script_name: currentTask?.script_name || '',
-    // status: currentDailyTask?.status || ProjectStatus.DOING,
-    // daily_tasks_refresh: currentDailyTask?.daily_tasks_refresh || DailyTaskRefresh.UNKNOWN,
+    script_id: currentTask?.script_id || '',
     description: currentTask?.description || '',
     has_manual: isEdit ? currentTask.has_manual : false,
   };
@@ -64,6 +63,7 @@ export default function ProjectTaskNewEditForm({
 
   const onSubmit = async (data) => {
     console.log(data)
+    const type = selectedTaskTab;
     const points = parseNumber(data?.points) || null;
     if (isEdit) {
       const body = {
@@ -71,6 +71,7 @@ export default function ProjectTaskNewEditForm({
         id: currentTask.id,
         project_id: projectId,
         points,
+        type,
       }
       console.log(body)
       showConfirm("Xác nhận cập nhật task?", () => put(body));
@@ -80,6 +81,7 @@ export default function ProjectTaskNewEditForm({
         ...data,
         project_id: projectId,
         points,
+        type,
       }
       console.log(body)
       showConfirm("Xác nhận thêm mới task?", () => post(body));
@@ -121,12 +123,14 @@ export default function ProjectTaskNewEditForm({
   }
 
   const [scripts, setScripts] = useState([]);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetch = async () => {
       try {
-        const response = await apiGet("/scripts/project/contains-name", { projectName });
-        setScripts(response.data.data || []);
+        const response = await apiGet(`/scripts/project/${projectId}`);
+        console.log(response.data.data)
+        setScripts(response.data.data.data || []);
       } catch (error) {
         console.error(error);
         onError(error.message)
@@ -140,7 +144,7 @@ export default function ProjectTaskNewEditForm({
     <FormProvider methods={methods} onSubmit={handleSubmit(onSubmit)}>
       <Row className='mt-5' gutter={[25, 20]}>
 
-        <Col span={16}>
+        <Col span={(selectedTaskTab === TaskType.DAILY || selectedTaskTab === TaskType.POINTS) ? 16 : 24}>
           <Controller
             name='name'
             control={control}
@@ -152,7 +156,7 @@ export default function ProjectTaskNewEditForm({
                 </label>
                 <Autocomplete
                   value={field.value}
-                  items={DAILY_TASK_ARR}
+                  items={TASK_ARR}
                   onChange={(value) => field.onChange(value)}
                   placeholder='Nhập tên task'
                 />
@@ -164,16 +168,18 @@ export default function ProjectTaskNewEditForm({
           />
         </Col>
 
-        <Col span={8}>
-          <RHFInput
-            label='Points bonus'
-            name='points'
-            placeholder='Nhập số points'
-            type='number'
-            min="1"
-          // max="9999999999999999"
-          />
-        </Col>
+        {(selectedTaskTab === TaskType.DAILY || selectedTaskTab === TaskType.POINTS) &&
+          <Col span={8}>
+            <RHFInput
+              label='Points bonus'
+              name='points'
+              placeholder='Nhập số points'
+              type='number'
+              min="1"
+            // max="9999999999999999"
+            />
+          </Col>
+        }
 
         <Col span={24}>
           <RHFInput
@@ -185,7 +191,7 @@ export default function ProjectTaskNewEditForm({
 
         <Col span={24}>
           <Controller
-            name='script_name'
+            name='script_id'
             control={control}
             render={({ field }) => (
               <>
@@ -194,38 +200,16 @@ export default function ProjectTaskNewEditForm({
                 </label>
                 <Combobox
                   value={field.value}
-                  items={scripts?.map(item => item?.fileName) || []}
+                  items={scripts?.map(item => item?.id) || []}
+                  convertItem={(id) => scripts?.find(item => item?.id === id)?.name}
                   placeholder='Chọn script'
                   placeholderSearch="script"
                   onChange={(value) => field.onChange(value)}
-                  capitalize={false}
                 />
               </>
             )}
           />
         </Col>
-
-        {/* <Col span={24}> */}
-        {/*   <Controller */}
-        {/*     name='daily_tasks_refresh' */}
-        {/*     control={control} */}
-        {/*     render={({ field, fieldState: { error } }) => ( */}
-        {/*       <> */}
-        {/*         <label className='d-block font-inter fw-500 fs-14'> */}
-        {/*           Làm mới task */}
-        {/*         </label> */}
-        {/*         <Select */}
-        {/*           onValueChange={(value) => field.onChange(value)} */}
-        {/*           value={field.value} */}
-        {/*           // placeholder='Chọn thời điểm làm mới' */}
-        {/*           className='mt-10' */}
-        {/*           items={[DailyTaskRefresh.UNKNOWN, DailyTaskRefresh.UTC0, DailyTaskRefresh.COUNT_DOWN_TIME_IT_UP]} */}
-        {/*           convertItem={convertDailyTaskRefreshEnumToText} */}
-        {/*         /> */}
-        {/*       </> */}
-        {/*     )} */}
-        {/*   /> */}
-        {/* </Col> */}
 
         <Col span={24}>
           <RHFTextarea
@@ -237,16 +221,6 @@ export default function ProjectTaskNewEditForm({
         </Col>
 
         <Col span={24} className='d-flex gap-15 mt-6'>
-
-          {/* <Checkbox */}
-          {/*   label='Points' */}
-          {/*   checked={hasPoint} */}
-          {/*   onChange={() => { */}
-          {/*     setValue('point', '') */}
-          {/*     setHasPoint(!hasPoint) */}
-          {/*   }} */}
-          {/* /> */}
-
           <Controller
             name='has_manual'
             control={control}
@@ -274,7 +248,7 @@ export default function ProjectTaskNewEditForm({
   )
 }
 
-const DAILY_TASK_ARR = [
+const TASK_ARR = [
   'Check-In',
   'Faucet',
   'Bridge',
@@ -282,4 +256,6 @@ const DAILY_TASK_ARR = [
   'Stake',
   'Chatbot',
   'Quiz',
+  'Reg',
+  'Login',
 ];

@@ -6,7 +6,8 @@ const {
   createProject,
   updateProject,
   updateProjectStatus,
-  deleteProject
+  deleteProject,
+  getAllProjectNames
 } = require('../services/projectService');
 const apiRes = require('../utils/apiResponse');
 
@@ -14,6 +15,16 @@ const apiRes = require('../utils/apiResponse');
 api.get('/', async (req, res, next) => {
   try {
     const projects = await getAllProjects(req);
+    return apiRes.toJson(res, projects);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get all projects
+api.get('/name/limit', async (req, res, next) => {
+  try {
+    const projects = await getAllProjectNames(req);
     return apiRes.toJson(res, projects);
   } catch (error) {
     next(error);

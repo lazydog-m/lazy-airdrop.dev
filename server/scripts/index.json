@@ -1,0 +1,54 @@
+{
+  "scripts": [
+    {
+      "id": "c0cdb531-e8be-465b-a3db-52f03a4c3715_1762436207950",
+      "name": "Test",
+      "project_id": "d3602212-4470-4a06-8939-6f83559ececd",
+      "createdAt": "2025-11-06T13:36:47.950Z",
+      "updatedAt": "2025-11-06T13:56:01.694Z",
+      "status": "in_active",
+      "description": "",
+      "logicItems": [
+        {
+          "type": "goto-url",
+          "id": "goto-url-1762436173194-0.6985126190045752",
+          "formData": {
+            "description": "",
+            "delayTime": 10000,
+            "url": "http://localhost:5173/dashboard/script/c0cdb531-e8be-465b-a3db-52f03a4c3715_1762436207950/edit"
+          }
+        }
+      ]
+    },
+    {
+      "id": "25dd51b9-1ff1-459e-9717-5c4d138d9d36_1762438494762",
+      "name": "Check-In",
+      "project_id": "d3602212-4470-4a06-8939-6f83559ececd",
+      "createdAt": "2025-11-06T14:14:54.762Z",
+      "updatedAt": "2025-11-06T14:14:54.762Z",
+      "status": "in_active",
+      "description": "",
+      "logicItems": []
+    },
+    {
+      "id": "4ac69572-8b8a-4469-9602-8b1118beddde_1762443613694",
+      "name": "qweqwe123",
+      "project_id": "fc0ffd4f-088c-420f-8037-281e7a31a67e",
+      "createdAt": "2025-11-06T15:40:13.694Z",
+      "updatedAt": "2025-11-09T15:34:19.966Z",
+      "status": "in_active",
+      "description": "",
+      "logicItems": [
+        {
+          "type": "goto-url",
+          "id": "goto-url-1762447832607-0.9494376912554537",
+          "formData": {
+            "description": "qweew\nqwe",
+            "delayTime": 0,
+            "url": "https://sosovalue.com/vi"
+          }
+        }
+      ]
+    }
+  ]
+}

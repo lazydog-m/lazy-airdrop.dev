@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Award, CalendarClock, CalendarDays, CircleUserRound, ClipboardCheck, ClipboardMinus, ClipboardX, Gift, ListFilter, Twitter } from 'lucide-react';
+import { Award, BadgeCheck, CalendarClock, CalendarDays, CircleUserRound, ClipboardCheck, ClipboardMinus, ClipboardX, Flame, Gift, Gitlab, Globe, Goal, LandPlot, ListFilter, Medal, Rocket, Trophy, Twitter, UserRound, UserRoundPlus } from 'lucide-react';
 import { ButtonGhost } from '@/components/Button';
-import { Color, StatusCommon } from '@/enums/enum';
+import { Color, StatusCommon, TaskType } from '@/enums/enum';
 import useDebounce from '@/hooks/useDebounce';
 import { TabsUi1, TabsUi } from '@/components/TabsUi';
-import { darkenColor, lightenColor } from '@/utils/convertUtil';
-import { Badge } from '@/components/ui/badge';
+import { convertProjectTaskTypeEnumToText, convertStatusCommonEnumToText, darkenColor, lightenColor } from '@/utils/convertUtil';
 import InputUi from '@/components/InputUi';
+import { SiChainguard } from "react-icons/si";
 
 export default function ProjectTaskFilterSearch({
   selectedStatusTab,
@@ -21,11 +21,7 @@ export default function ProjectTaskFilterSearch({
   search = '',
 
   action = {},
-  daily,
-
-  selectedStatusItems,
-  onChangeSelectedStatusItems,
-  onClearSelectedStatusItems,
+  pagination = {},
 }) {
 
   const [filterSearch, setFilterSearch] = useState('');
@@ -55,6 +51,74 @@ export default function ProjectTaskFilterSearch({
     setFilterSearch('');
   }
 
+  const IS_REG_LOGIN = pagination?.type === TaskType.REG || pagination?.type === TaskType.LOGIN;
+
+  const statusTabs = [
+    {
+      name: convertStatusCommonEnumToText(StatusCommon.IN_COMPLETE),
+      value: StatusCommon.IN_COMPLETE,
+      // total: pagination?.totalItemsFree || 0,
+      icon: <ClipboardMinus size={17} />
+    },
+    {
+      name: convertStatusCommonEnumToText(StatusCommon.COMPLETED),
+      value: StatusCommon.COMPLETED,
+      // total: pagination?.totalItemsFree || 0,
+      icon: <ClipboardCheck size={17} />
+    },
+    {
+      name: convertStatusCommonEnumToText(StatusCommon.UN_ACTIVE),
+      value: StatusCommon.UN_ACTIVE,
+      // total: pagination?.totalItemsFree || 0,
+      icon: <ClipboardX size={17} />
+    },
+  ];
+
+  const getTotalByType = (type) => {
+    const total = pagination?.totalCountType?.find(item => item?.type === type)?.total;
+    return total || 0;
+  }
+
+  const taskTabs = [
+    {
+      name: convertProjectTaskTypeEnumToText(TaskType.REG),
+      value: TaskType.REG,
+      total: getTotalByType(TaskType.REG),
+      icon: <UserRoundPlus size={17.5} className='mt-0' />
+    },
+    {
+      name: convertProjectTaskTypeEnumToText(TaskType.LOGIN),
+      value: TaskType.LOGIN,
+      total: getTotalByType(TaskType.LOGIN),
+      icon: <CircleUserRound size={17.5} className='mt-0' />
+    },
+    {
+      name: convertProjectTaskTypeEnumToText(TaskType.DAILY),
+      value: TaskType.DAILY,
+      total: getTotalByType(TaskType.DAILY),
+      icon: <CalendarClock size={17.5} className='mt-0' />
+    },
+    {
+      name: convertProjectTaskTypeEnumToText(TaskType.POINTS),
+      value: TaskType.POINTS,
+      total: getTotalByType(TaskType.POINTS),
+      icon: <Twitter size={17.5} className='mt-0' />
+    },
+    {
+      name: convertProjectTaskTypeEnumToText(TaskType.OFF_CHAIN),
+      value: TaskType.OFF_CHAIN,
+      total: getTotalByType(TaskType.OFF_CHAIN),
+      icon: <Globe size={17.5} className='mt-0' />
+    },
+    {
+      name: convertProjectTaskTypeEnumToText(TaskType.AIRDROP),
+      value: TaskType.AIRDROP,
+      total: getTotalByType(TaskType.AIRDROP),
+      icon: <Goal size={18} className='mt-0' />
+    },
+  ];
+
+
   return (
     <>
       <div className="filter-search d-flex gap-10 items-center justify-between mt-2">
@@ -64,7 +128,7 @@ export default function ProjectTaskFilterSearch({
           onChangeTab={(value) => setFilterTaskTab(value)}
         />
         <div className="filter-search d-flex gap-10 items-center">
-          {search &&
+          {filterSearch &&
             <ButtonGhost
               icon={<ListFilter color={Color.ORANGE} />}
               onClick={clearAll}
@@ -80,7 +144,7 @@ export default function ProjectTaskFilterSearch({
           {action}
         </div>
       </div>
-      {selectedTaskTab !== 'reg' &&
+      {!IS_REG_LOGIN &&
         <div className="d-flex justify-content-between align-items-center gap-20 mt-0.5">
           <div className="filter-search d-flex gap-10 items-center">
             <TabsUi1
@@ -95,113 +159,3 @@ export default function ProjectTaskFilterSearch({
   )
 }
 
-const statusTabs = [
-  {
-    name: "Chưa hoàn thành",
-    value: "in_complete",
-    // total: pagination?.totalItemsFree || 0,
-    icon: <ClipboardMinus size={17} />
-  },
-  {
-    name: "Đã hoàn thành",
-    value: "completed",
-    // total: pagination?.totalItemsFree || 0,
-    icon: <ClipboardCheck size={17} />
-  },
-  {
-    name: "Ngừng hoạt động",
-    value: "un_active",
-    // total: pagination?.totalItemsFree || 0,
-    icon: <ClipboardX size={17} />
-  },
-];
-
-const taskTabs = [
-  {
-    name: "Reg/Login",
-    value: "reg",
-    // total: pagination?.totalItemsFree || 0,
-    icon: <CircleUserRound size={17.5} className='mt-0' />
-  },
-  {
-    name: "Daily",
-    value: "daily",
-    // total: pagination?.totalItemsFree || 0,
-    icon: <CalendarClock size={17.5} className='mt-0' />
-  },
-  {
-    name: "Points/Connect",
-    value: "points",
-    // total: pagination?.totalItemsFree || 0,
-    icon: <Twitter size={17.5} className='mt-0' />
-  },
-  {
-    name: "Off-chain",
-    value: "off_chain",
-    // total: pagination?.totalItemsFree || 0,
-    icon: <Award size={17.5} className='mt-0' />
-  },
-  {
-    name: "Airdrop",
-    value: "airdrop",
-    // total: pagination?.totalItemsFree || 0,
-    icon: <Gift size={18} className='mt-0' />
-  },
-];
-
-const statusFilters = {
-  name: 'Trạng thái',
-  items: [
-    StatusCommon.IN_ACTIVE, StatusCommon.UN_ACTIVE
-  ],
-};
-
-const Tags = ({ selectedItems, style = () => { }, convert }) => {
-  return (
-    selectedItems.map((item) => {
-      return (
-        <Badge
-          style={{
-            backgroundColor: darkenColor(style(item)),
-            borderColor: lightenColor(style(item)),
-            color: 'white'
-          }}
-          className='text-capitalize fw-400 fs-12 bdr'
-        >
-          {convert ? convert(item) : item}
-        </Badge>
-      )
-    })
-  )
-}
-{/* <div className="filters-button d-flex gap-10"> */ }
-{/*   <Popover className='button-dropdown-filter-checkbox' */ }
-{/*     modalFilter */ }
-{/*     trigger={ */ }
-{/*       <ButtonOutlineTags */ }
-{/*         title={statusFilters.name} */ }
-{/*         icon={<CirclePlus />} */ }
-{/*         className='button-outlined font-inter pointer color-white h-40 fs-13 d-flex' */ }
-{/*         selected={selectedStatusItems} */ }
-{/*         tags={ */ }
-{/*           <Tags */ }
-{/*             selectedItems={selectedStatusItems} */ }
-{/*             style={convertStatusCommonEnumToColorHex} */ }
-{/*             convert={convertStatusCommonEnumToText} */ }
-{/*           /> */ }
-{/**/ }
-{/*         } */ }
-{/*       /> */ }
-{/*     } */ }
-{/*     content={ */ }
-{/*       <DropdownCheckboxMenu */ }
-{/*         convert={convertStatusCommonEnumToText} */ }
-{/*         items={statusFilters.items} */ }
-{/*         selectedItems={selectedStatusItems} */ }
-{/*         onChangeSelectedItems={onChangeSelectedStatusItems} */ }
-{/*         onClearSelectedItems={onClearSelectedStatusItems} */ }
-{/*       /> */ }
-{/*     } */ }
-{/*   /> */ }
-{/**/ }
-{/* </div> */ }

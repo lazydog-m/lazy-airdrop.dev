@@ -13,6 +13,7 @@ import useTable from '@/hooks/useTable';
 import { delayApi } from '@/utils/commonUtil';
 import { Link } from 'react-router-dom';
 import { PATH_DASHBOARD } from '@/routes/path.js';
+import { StatusCommon } from '@/enums/enum.js';
 
 const ScriptDataTableMemo = React.memo(ScriptDataTable);
 
@@ -22,7 +23,7 @@ export default function ScriptList() {
   const { onOpen, onClose } = useSpinner();
   const { onError } = useMessage();
 
-  const [selectedStatusItems, setSelectedStatusItems] = useState([]);
+  const [selectedStatusItems, setSelectedStatusItems] = useState([StatusCommon.IN_ACTIVE]);
   const [search, setSearch] = useState('');
 
   const {
@@ -77,6 +78,10 @@ export default function ScriptList() {
   const handleSelectRow = React.useCallback((id) => {
     onSelectRow(id);
   }, [selected])
+
+  const handleUpdateData = useCallback((onTrigger = () => { }) => {
+    fetchApi(true, onTrigger)
+  }, [search, page, selectedStatusItems]);
 
   const handleDeleteData = useCallback((id, onTrigger = () => { }) => {
     fetchApi(true, () => {
@@ -148,6 +153,7 @@ export default function ScriptList() {
           selected={selected}
           onSelectAllRows={handleSelectAllRows}
           onSelectRow={handleSelectRow}
+          onUpdateData={handleUpdateData}
           onDeleteData={handleDeleteData}
         />
 

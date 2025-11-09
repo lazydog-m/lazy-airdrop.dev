@@ -42,7 +42,7 @@ const projectSchema = Joi.object({
       'string.base': 'Ghi chú phải là chuỗi',
       'string.max': 'Ghi chú chỉ đươc phép dài tối đa 10,000 ký tự!',
     }),
-  type: Joi.string()
+  type: Joi
     .valid(ProjectType.GAME, ProjectType.DEPIN, ProjectType.TESTNET, ProjectType.WEB, ProjectType.GALXE, ProjectType.RETROACTIVE)
     .messages({
       'any.only': 'Mảng dự án không hợp lệ!'
@@ -211,6 +211,44 @@ const getAllProjects = async (req) => {
   };
 }
 
+const getAllProjectNames = async (req) => {
+  const {
+    search
+  } = req.query;
+
+  let whereClause = 'WHERE p.deletedAt IS NULL';
+  const conditions = [];
+  const replacements = [];
+
+  if (search) {
+    conditions.push(`p.name LIKE ?`);
+    replacements.push(`%${search}%`);
+  }
+
+  if (conditions.length > 0) {
+    whereClause += ' AND ' + conditions.join(' AND ');
+  }
+
+  const query = `
+    SELECT 
+      p.name 
+    FROM 
+      projects p
+   ${whereClause} 
+   LIMIT 20`;
+
+  const data = await sequelize.query(query, {
+    replacements: replacements,
+  });
+
+  return {
+    data: data[0],
+    pagination: {
+      totalItems: data.length,
+    }
+  };
+}
+
 const countProject = async () => {
   const whereConditions = {
     deletedAt: null,
@@ -221,11 +259,41 @@ const countProject = async () => {
   return count;
 }
 
+const getProjectNameById = async (id) => {
+  const project = await Project.findOne({
+    where: {
+      id,
+      deletedAt: null,
+    }
+  });
+
+  if (!project) {
+    return "";
+  }
+
+  return project.name;
+}
+
+const getProjectIdByName = async (name) => {
+  const project = await Project.findOne({
+    where: {
+      name,
+      deletedAt: null,
+    }
+  });
+
+  if (!project) {
+    throw new NotFoundException(`Không tìm thấy dự án này`)
+  }
+
+  return project.id;
+}
+
 const getProjectById = async (id) => {
   const project = await Project.findByPk(id);
 
   if (!project) {
-    throw new NotFoundException(`Not found project with id ${id}`)
+    throw new NotFoundException(`Không tìm thấy dự án này`)
   }
 
   return project;
@@ -238,10 +306,6 @@ const completeDailyTasks = async (body) => {
   const dailyTaskCompleted = await DailyTaskCompleted.create({
     project_id,
   });
-
-  // console.log("Node time:", new Date());
-  // console.log("DB time:", (await sequelize.query("SELECT NOW() as now"))[0][0].now);
-  // console.log("Project time:", dailyTaskCompleted.createdAt);
 
   const result = await sequelize.query(queryAfterSave, {
     replacements: { id: dailyTaskCompleted.project_id },
@@ -376,7 +440,10 @@ const validateProjectStatus = (data) => {
 
 module.exports = {
   getAllProjects,
+  getAllProjectNames,
   getProjectById,
+  getProjectIdByName,
+  getProjectNameById,
   createProject,
   updateProject,
   updateProjectStatus,

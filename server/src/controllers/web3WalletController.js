@@ -22,7 +22,7 @@ api.get('/', async (req, res, next) => {
 });
 
 // Get all web3 wallets no page
-api.get('/no-page', async (req, res, next) => {
+api.get('/active', async (req, res, next) => {
   try {
     const web3WalletsNoPage = await getAllWeb3WalletsNoPage(req);
     return apiRes.toJson(res, web3WalletsNoPage);

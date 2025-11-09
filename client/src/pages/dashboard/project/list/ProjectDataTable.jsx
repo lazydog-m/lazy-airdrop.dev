@@ -5,7 +5,7 @@ import DataTable from '@/components/DataTable';
 import { ButtonIcon } from '@/components/Button';
 import { convertProjectStatusEnumToColorHex, convertProjectStatusEnumToText, convertProjectTypeEnumToColorHex, darkenColor, lightenColor } from '@/utils/convertUtil';
 import { RiTodoLine } from "react-icons/ri";
-import { EllipsisVertical, X, PencilLine, CheckCheck, Trash2, CalendarArrowDown, CalendarArrowUp, Clock, Users, ClipboardClock, ClipboardCheck, ClipboardList, UserRoundX, UserRoundCheck, UserLock, Lock, UserRoundMinus, ShieldUser, ShieldBan, FileLock, FileLock2, UserX, UserStar, UserRoundCog, ContactRound, UserRoundPlus, Fingerprint } from 'lucide-react';
+import { EllipsisVertical, X, PencilLine, CheckCheck, Trash2, CalendarArrowDown, CalendarArrowUp, Clock, Users, ClipboardClock, ClipboardCheck, ClipboardList, UserRoundX, UserRoundCheck, UserLock, Lock, UserRoundMinus, ShieldUser, ShieldBan, FileLock, FileLock2, UserX, UserStar, UserRoundCog, ContactRound, UserRoundPlus, Fingerprint, CirclePlay, CalendarCheck } from 'lucide-react';
 import { TbClockCheck } from "react-icons/tb";
 import { Badge } from '@/components/ui/badge';
 import { Color, DailyTaskRefresh, DAILY_TASK_TEXT, NOT_AVAILABLE, ProjectStatus, PROJECT_STATUS_ARR } from '@/enums/enum';
@@ -298,7 +298,7 @@ export default function ProjectDataTable({
               }}
             >
               <span className='flex gap-1'>
-                <Fingerprint size={'14px'} className='mt-1' />
+                <UserRoundPlus size={'14.5px'} className='mt-1' />
                 60
               </span>
             </Badge>
@@ -392,6 +392,7 @@ export default function ProjectDataTable({
 
             <DropdownUi
               align='end'
+              // minW='175px'
               footerDelete
               trigger={
                 <ButtonIcon
@@ -407,6 +408,13 @@ export default function ProjectDataTable({
                   />,
                   onClick: () => handleClickOpenTask(row, false)
                 },
+                // {
+                //   title: <MoreItem
+                //     title={'Scripts'}
+                //     icon={<CirclePlay size={'17px'} />}
+                //   />,
+                //   onClick: () => handleClickOpenTask(row, false)
+                // },
                 {
                   title: (
                     <MoreItem

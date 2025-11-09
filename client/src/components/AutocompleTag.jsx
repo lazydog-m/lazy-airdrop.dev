@@ -1,5 +1,5 @@
 
-import { Check, ChevronsUpDownIcon } from 'lucide-react';
+import { Check, ChevronsUpDownIcon, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { ButtonOutline } from './Button';
 import Popover from './Popover';
@@ -85,7 +85,11 @@ function AutocompleteTag({
     <Popover
       modal={true}
       trigger={
-        <ButtonTag tags={tags} placeholder={placeholder} />
+        <ButtonTag
+          onChange={() => onChange([])}
+          tags={tags}
+          placeholder={placeholder}
+        />
       }
       content={
         <div ref={wrapperRef} style={{ position: 'relative', height: 223 }} className="p-0">
@@ -132,7 +136,7 @@ function AutocompleteTag({
   );
 }
 
-const ButtonTag = ({ tags = [], placeholder }) => {
+const ButtonTag = ({ tags = [], placeholder, onChange }) => {
   return (
     <div
       style={{ paddingInline: '11.5px' }}
@@ -147,7 +151,21 @@ const ButtonTag = ({ tags = [], placeholder }) => {
         :
         placeholder
       }
-      <ChevronsUpDownIcon color="#999998" className="mt-0.5" size={16} />
+      <span className="flex gap-10">
+        {tags?.length > 0 &&
+          <button
+            type="button"
+            className="x-modal cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation()
+              onChange([]);
+            }}
+          >
+            <X size={16} />
+          </button>
+        }
+        <ChevronsUpDownIcon color="#999998" size={16} />
+      </span>
     </div>
   )
 }

@@ -26,16 +26,6 @@ api.get('/', async (req, res, next) => {
   }
 });
 
-// // Get profile by ID
-// api.get('/:id', async (req, res, next) => {
-//   try {
-//     const profile = await getProfileById(req.params.id);
-//     return apiRes.toJson(res, profile);
-//   } catch (error) {
-//     next(error);
-//   }
-// });
-
 // Create a new profile
 api.post('/', async (req, res, next) => {
   const { body } = req;
@@ -136,7 +126,7 @@ api.post('/profile', async (req, res, next) => {
 
 api.get('/:id/open', async (req, res, next) => {
   try {
-    const id = await openProfileById(req.params.id)
+    const id = await openProfileById(req)
     return apiRes.toJson(res, id);
   } catch (error) {
     next(error);
@@ -145,8 +135,7 @@ api.get('/:id/open', async (req, res, next) => {
 
 api.get('/open-multiple', async (req, res, next) => {
   try {
-    const { ids } = req.query;
-    const newOpenningIds = await openProfilesByIds(ids)
+    const newOpenningIds = await openProfilesByIds(req)
     return apiRes.toJson(res, newOpenningIds);
   } catch (error) {
     next(error);

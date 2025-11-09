@@ -16,6 +16,24 @@ export const PROJECT_STATUS_ARR = [
   ProjectStatus.END_AIRDROP
 ]
 
+export const TaskType = {
+  DAILY: 'daily',
+  POINTS: 'points',
+  OFF_CHAIN: 'off_chain',
+  AIRDROP: 'airdrop',
+  REG: 'reg',
+  LOGIN: 'login',
+}
+
+export const PROJECT_TASK_TYPE_ARR = [
+  TaskType.REG,
+  TaskType.LOGIN,
+  TaskType.DAILY,
+  TaskType.POINTS,
+  TaskType.OFF_CHAIN,
+  TaskType.AIRDROP,
+]
+
 export const ProjectCost = {
   FREE: 'free',
   FEE: 'fee',
@@ -63,6 +81,8 @@ export const WalletStatus = {
 export const StatusCommon = {
   IN_ACTIVE: 'in_active',
   UN_ACTIVE: 'un_active',
+  IN_COMPLETE: 'in_complete',
+  COMPLETED: 'completed',
 }
 
 export const DailyTaskRefresh = {
@@ -82,11 +102,6 @@ export const TaskStatus = {
   IN_PROGRESS: 'in_progress',
   TO_REVIEW: 'to_review',
   COMPLETED: 'completed',
-}
-
-export const TaskType = {
-  NEW_PROJECT: 'new_project',
-  NEW_TASK: 'new_task',
 }
 
 export const TaskRank = {

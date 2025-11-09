@@ -20,10 +20,28 @@ export const ButtonOutlineInfo = ({ icon, title, ...other }) => {
   )
 }
 
+// export const ButtonInfo = ({ icon, title, ...other }) => {
+//   return (
+//     <Button className='button-info select-none font-inter pointer h-40 fs-13 d-flex' {...other}>
+//       {icon} {title}
+//     </Button>
+//   )
+// }
+
 export const ButtonInfo = ({ icon, title, ...other }) => {
   return (
-    <Button className='button-info select-none font-inter pointer h-40 fs-13 d-flex' {...other}>
-      {icon} {title}
+    <Button
+      {...other}
+      className="
+        flex items-center justify-center
+        select-none font-inter pointer
+        px-3 fs-13 h-40
+        leading-none align-middle
+        button-info
+      "
+    >
+      <span className="flex items-center justify-center">{icon}</span>
+      <span className="relative top-[0.5px]">{title}</span>
     </Button>
   )
 }
@@ -37,14 +55,32 @@ export const ButtonOutlinePrimary = ({ icon, title, ...other }) => {
   )
 }
 
-export const ButtonOrange = ({ icon, title, ...other }) => {
+export const ButtonOutlineOrange = ({ icon, title, ...other }) => {
   return (
     <Button
-      className='font-inter button-orange select-none bdr pointer color-white h-40 fs-13 d-flex'
+      className='font-inter button-outline-orange select-none bdr pointer color-white h-40 fs-13 d-flex'
       {...other}
     >
       {icon}
       {title}
+    </Button>
+  )
+}
+
+export const ButtonOrange = ({ icon, title, ...other }) => {
+  return (
+    <Button
+      {...other}
+      className="
+        flex items-center justify-center
+        select-none font-inter pointer
+        px-3 fs-13 h-40
+        leading-none align-middle
+        button-orange
+      "
+    >
+      <span className="flex items-center justify-center">{icon}</span>
+      <span className="relative top-[0.5px]">{title}</span>
     </Button>
   )
 }
@@ -54,6 +90,14 @@ export const ButtonDanger = ({ icon, title, ...other }) => {
     <Button variant={'destructive'} className='font-inter select-none bdr pointer color-white h-40 fs-13 d-flex' {...other}>
       {icon}
       {title}
+    </Button>
+  )
+}
+
+export const ButtonSuccess = ({ icon, title, ...other }) => {
+  return (
+    <Button className='button-success select-none font-inter pointer h-40 fs-13 d-flex' {...other}>
+      {icon} {title}
     </Button>
   )
 }

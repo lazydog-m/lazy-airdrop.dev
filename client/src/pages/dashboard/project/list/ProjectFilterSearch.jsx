@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
-import { CirclePlus, ListFilter } from 'lucide-react';
+import { CirclePlus, ListFilter, UserRoundMinus, UserRoundPlus } from 'lucide-react';
 import { DropdownCheckboxMenu } from '@/components/Checkbox';
 import Popover from "@/components/Popover";
 import { ButtonGhost, ButtonOutlineTags } from '@/components/Button';
-import { Color, DAILY_TASK_TEXT, PROJECT_STATUS_ARR, PROJECT_TYPE_ARR } from '@/enums/enum';
+import { Color, DailyTaskRefresh, DAILY_TASK_TEXT, PROJECT_STATUS_ARR, PROJECT_TYPE_ARR, StatusCommon } from '@/enums/enum';
 import { Badge } from '@/components/ui/badge';
-import { convertProjectStatusEnumToColorHex, convertProjectStatusEnumToText, convertProjectTaskItemsToColorHex, convertProjectTypeEnumToColorHex, darkenColor, lightenColor } from '@/utils/convertUtil';
+import { convertDailyTaskRefreshEnumToText, convertProjectStatusEnumToColorHex, convertProjectStatusEnumToText, convertProjectTaskItemsToColorHex, convertProjectTypeEnumToColorHex, convertStatusCommonEnumToText, darkenColor, lightenColor } from '@/utils/convertUtil';
 import useDebounce from '@/hooks/useDebounce';
 import { RiTodoLine } from 'react-icons/ri';
 import InputUi from '@/components/InputUi';
@@ -23,10 +23,6 @@ export default function ProjectFilterSearch({
   selectedTaskItems = [],
   onChangeSelectedTaskItems,
   onClearSelectedTaskItems,
-
-  selectedCheatItems = [],
-  onChangeSelectedCheatItems,
-  onClearSelectedCheatItems,
 
   selectedTask,
   onChangeSelectedTask,
@@ -58,10 +54,9 @@ export default function ProjectFilterSearch({
         header: DAILY_TASK_TEXT,
         icon: <RiTodoLine size={'16px'} />,
         children: [
-          'UTC+0',
-          'CD-24',
-          'Chưa Hoàn Thành',
-          // 'Todo > 0',
+          convertDailyTaskRefreshEnumToText(DailyTaskRefresh.UTC0),
+          convertDailyTaskRefreshEnumToText(DailyTaskRefresh.COUNT_DOWN_TIME_IT_UP),
+          convertStatusCommonEnumToText(StatusCommon.IN_COMPLETE),
         ]
       },
       {
@@ -69,7 +64,7 @@ export default function ProjectFilterSearch({
         icon: <RiTodoLine size={'16px'} />,
         children: [
           'Đến Hạn',
-          'Chưa Làm',
+          convertStatusCommonEnumToText(StatusCommon.IN_COMPLETE),
         ]
       }
     ]
@@ -200,7 +195,7 @@ export default function ProjectFilterSearch({
           }
         />
 
-        {(selectedStatusItems.length > 0 || selectedTypeItems.length > 0 || selectedTask || search) &&
+        {(selectedStatusItems.length > 0 || selectedTypeItems.length > 0 || selectedTask || filterSearch) &&
           <ButtonGhost
             icon={<ListFilter color={Color.ORANGE} />}
             onClick={clearAll}
@@ -230,8 +225,8 @@ const typeFilters = {
 const profileFilters = {
   name: 'Profiles',
   items: [
-    'Chưa Join',
-    'Chưa Reg',
+    'Chưa Tham Gia',
+    'Chưa Đăng Ký',
   ],
 };
 

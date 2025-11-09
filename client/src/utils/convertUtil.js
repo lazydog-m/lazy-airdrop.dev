@@ -1,5 +1,5 @@
 import { RESOURCES } from "@/commons/Resources";
-import { Color, DailyTaskRefresh, DAILY_TASK_TEXT, ProjectCost, ProjectStatus, ProjectType, StatusCommon, TaskStatus } from "@/enums/enum";
+import { Color, DailyTaskRefresh, DAILY_TASK_TEXT, ProjectCost, ProjectStatus, ProjectType, StatusCommon, TaskStatus, TaskType } from "@/enums/enum";
 
 export const convertProjectStatusEnumToText = (status) => {
 
@@ -70,14 +70,14 @@ export const convertProjectCostTypeEnumToColorHex = (costType) => {
 
 }
 
-export const convertProjectTaskItemsToColorHex = (other) => {
+export const convertProjectTaskItemsToColorHex = (item) => {
 
-  switch (other) {
-    case 'Chưa Hoàn Thành':
+  switch (item) {
+    case convertStatusCommonEnumToText(StatusCommon.IN_COMPLETE):
       return Color.ORANGE
-    case 'UTC+0':
+    case convertDailyTaskRefreshEnumToText(DailyTaskRefresh.UTC0):
       return Color.PRIMARY
-    case 'CD-24':
+    case convertDailyTaskRefreshEnumToText(DailyTaskRefresh.COUNT_DOWN_TIME_IT_UP):
       return Color.WARNING
     default: return Color.SUCCESS
   }
@@ -91,6 +91,10 @@ export const convertStatusCommonEnumToText = (status) => {
       return 'Đang hoạt động'
     case StatusCommon.UN_ACTIVE:
       return 'Ngừng Hoạt Động'
+    case StatusCommon.COMPLETED:
+      return 'Đã hoàn thành'
+    case StatusCommon.IN_COMPLETE:
+      return 'Chưa hoàn thành'
     default: return null
   }
 
@@ -157,9 +161,9 @@ export const convertDailyTaskRefreshEnumToText = (type) => {
     case DailyTaskRefresh.UNKNOWN:
       return DailyTaskRefresh.UNKNOWN
     case DailyTaskRefresh.UTC0:
-      return 'UTC+0 (7 giờ sáng)'
+      return '7:00 AM'
     case DailyTaskRefresh.COUNT_DOWN_TIME_IT_UP:
-      return 'Countdown 24h'
+      return 'CD-24'
     case DailyTaskRefresh.NEW_TASK:
       return 'Random trong ngày'
     default: return null
@@ -185,6 +189,26 @@ export const convertBitToBoolean = (bit) => {
     case 0:
       return false
     default: return null
+  }
+
+}
+
+export const convertProjectTaskTypeEnumToText = (type) => {
+
+  switch (type) {
+    case TaskType.REG:
+      return "Reg"
+    case TaskType.LOGIN:
+      return "Login"
+    case TaskType.DAILY:
+      return "Daily"
+    case TaskType.POINTS:
+      return "Points/Connect"
+    case TaskType.OFF_CHAIN:
+      return "Off-Chain"
+    case TaskType.AIRDROP:
+      return "Airdrop"
+    default: return type
   }
 
 }
@@ -267,4 +291,6 @@ export const textTrim = (text = '') => {
   return text.trim();
 }
 
-
+export const textCapitalize = (text = '') => {
+  return text?.toLowerCase()?.replace(/\b\w/g, c => c?.toUpperCase());
+}

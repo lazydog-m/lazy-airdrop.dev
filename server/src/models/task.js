@@ -38,8 +38,8 @@ const Task = db.define('tasks', {
     ],
     defaultValue: TaskType.DAILY,
   },
-  script_name: {
-    type: DataTypes.STRING(50),
+  script_id: {
+    type: DataTypes.STRING(255),
   },
   description: {
     type: DataTypes.STRING(10000),

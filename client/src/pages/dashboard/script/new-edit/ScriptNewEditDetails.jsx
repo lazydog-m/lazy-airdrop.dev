@@ -84,16 +84,21 @@ const ActionChildrenItem = ({ item, onAddAction = () => { }, ...other }) => {
   )
 }
 
-const ActionLogicItem = ({ item, ...other }) => {
+const ActionLogicItem = ({ item, idx, ...other }) => {
   return (
     <div className='d-flex gap-20'>
       <div className="d-flex fs-14 fw-400 gap-8 pointer select-none main-logic-item-action align-items-center" {...other}>
         <GripVertical className='select-none drag-logic' color='#A8A8A8' size={'17px'} />
+        {/* <span className='text-gray me-5'> */}
+        {/* {`(${idx + 1})`} */}
+        {/* </span> */}
         {item.icon}
         <p>{item.name}</p>
       </div>
 
-      <span className='text-gray text-too-long-400 fw-500'>
+      <span className='text-gray text-too-long-400 fw-500'
+        style={{ color: Color.BROWN }}
+      >
         {item.placeholder({ ...item.formData })}
       </span>
     </div>
@@ -297,8 +302,7 @@ export default function ScriptNewEditDetails({
                             {...prov.draggableProps}
                             {...prov.dragHandleProps}
                           >
-                            <ActionLogicItem item={item} key={item.id} />
-
+                            <ActionLogicItem idx={idx} item={item} key={item.id} />
 
                             <div className='d-flex logic-items-icon'>
                               <ButtonIcon

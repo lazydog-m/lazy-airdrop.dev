@@ -12,8 +12,8 @@ const HttpStatus = {
 };
 
 const Message = {
-  SUCCESS: "Success!",
-  ERROR: "Error unknown!",
+  SUCCESS: "Success",
+  ERROR: "Error",
 };
 
 const HttpStatusCode = {

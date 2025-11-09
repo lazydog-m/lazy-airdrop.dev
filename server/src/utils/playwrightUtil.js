@@ -38,8 +38,6 @@ const closingByApiIds = new Set();
 
 let isStop = false;
 const setIsStop = (value) => { isStop = value; };
-let lastUrl = false;
-const setIsSortAll = (value) => { lastUrl = value; };
 
 // chạy sript tối đa 21 profile 1 luồng
 function createGridLayoutScript(profileCount) {
@@ -104,8 +102,10 @@ async function sortGridLayout() {
   const layout = createGridLayout(browsers.length);
 
   for (let i = 0; i < browsers.length; i++) {
-    const { page, chrome } = browsers[i];
-    const client = await page.context().newCDPSession(page); // kết nối đến profile dựa trên page
+    const { chrome, context } = browsers[i];
+    const pages = getValidPages(context);
+    const getPage = pages[0] || await context.newPage();
+    const client = await getPage.context().newCDPSession(getPage); // kết nối đến profile dựa trên page
 
     const { windowId } = await client.send("Browser.getWindowForTarget");
     const pos = layout[i];
@@ -122,11 +122,15 @@ async function sortGridLayout() {
     });
 
     // Nổi cửa sổ
-    if (getOs() === 'win32') {
-      const pathNircmd = path.join(config.TOOL_DIR, 'nircmd-x64', 'nircmd.exe');
-      exec(`"${pathNircmd}" win min process /${chrome.pid}`);
-      exec(`"${pathNircmd}" win activate process /${chrome.pid}`);
-    }
+    activeChrome(chrome.pid)
+  }
+}
+
+function activeChrome(pid) {
+  if (getOs() === 'win32') {
+    const pathNircmd = path.join(config.TOOL_DIR, 'nircmd-x64', 'nircmd.exe');
+    exec(`"${pathNircmd}" win min process /${pid}`);
+    exec(`"${pathNircmd}" win activate process /${pid}`);
   }
 }
 
@@ -144,6 +148,7 @@ async function closeExtensionPages(context, browser) {
   let startupExtTotal = startupExts.length;
 
   return new Promise(async (resolve, reject) => {
+    // nếu như await promise này, thì khi close browser nó mà chưa đóng đủ ext sẽ bị treo api
     browser?.on('disconnected', () => {
       reject(new RestApiException('Chưa sẵn sàng chạy kịch bản!'));
     });
@@ -287,18 +292,18 @@ async function openProfile({ profile, port, layout, activate = false, runScript 
     page = context.pages()[0] || await context.newPage();
 
     // ko await khi mở tay profile tránh load lâu api
-    if (runScript) {
-      await closeExtensionPages(context) // chỉ await khi chạy script tránh xung đọt thao tác
-    }
-    else {
-      closeExtensionPages(context)
+    // if (runScript) {
+    //   await closeExtensionPages(context) // chỉ await khi chạy script tránh xung đọt thao tác
+    // }
+    // else {
+    closeExtensionPages(context)
+    // }
+
+    // window ko active cửa sổ chrome như linux
+    if (activate) {
+      activeChrome(chrome.pid)
     }
 
-    if (activate && getOs() === 'win32') {
-      const pathNircmd = path.join(config.TOOL_DIR, 'nircmd-x64', 'nircmd.exe');
-      exec(`"${pathNircmd}" win min process /${chrome.pid}`);
-      exec(`"${pathNircmd}" win activate process /${chrome.pid}`);
-    }
 
   } catch (error) {
     usedPorts.delete(port);
@@ -387,12 +392,6 @@ async function openProfileTest({ runScript = false }) {
     // xảy ra khi context đã bị detach do browser bị disconnect
     page = context.pages()[0] || await context.newPage();
 
-    if (getOs() === 'win32') {
-      const pathNircmd = path.join(config.TOOL_DIR, 'nircmd-x64', 'nircmd.exe');
-      exec(`"${pathNircmd}" win min process /${chrome.pid}`);
-      exec(`"${pathNircmd}" win activate process /${chrome.pid}`);
-    }
-
     // ko await khi mở tay profile tránh load lâu api
     // if (runScript) {
     //   await closeExtensionPages(context, browser) // chỉ await khi chạy script tránh xung đọt thao tác
@@ -401,6 +400,7 @@ async function openProfileTest({ runScript = false }) {
     closeExtensionPages(context)
     // }
 
+    activeChrome(chrome.pid)
 
   } catch (error) {
     if (error instanceof RestApiException) {
@@ -438,8 +438,8 @@ const reConnectBrowser = async ({ chrome }) => {
 }
 
 const getValidPages = (context) => {
-  return context.pages().filter(p => {
-    const url = p.url();
+  return context?.pages()?.filter(p => {
+    const url = p?.url();
     return !/offscreen\.html$/.test(url) && !/background\.html$/.test(url);
   });
 };
@@ -447,18 +447,16 @@ const getValidPages = (context) => {
 function closeProfileTestListener(browser) {
   browser.on('disconnected', async () => {
     try {
-      // ddag xung dot stop voi x co bi vao day ca 2 hay ko, co vao true ca 2 hay ko, neu vao se ko tat duoc button
       if (isStop) {
         setIsStop(false);
         return;
       }
 
-      const profileTest = getBrowserTest();
+      // const profileTest = getBrowserTest();
 
-      // ăn disconnected do close bằng x thì ko làm gì cả vì ko có browserTest (tức ko setBrowserTest được do api bị vào catch)
-      if (Object.keys(profileTest).length <= 0) {
-        return;
-      }
+      // if (Object.keys(profileTest).length <= 0) {
+      //   return;
+      // }
 
       setBrowserTest({})
 
@@ -490,4 +488,5 @@ module.exports = {
   setIsStop,
   reConnectBrowser,
   getValidPages,
+  activeChrome,
 }

@@ -9,17 +9,12 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import Select from "@/components/Select";
 import { ButtonPrimary } from "@/components/Button";
-import { apiPost, apiPut } from "@/utils/axios";
-import useConfirm from "@/hooks/useConfirm";
-import useNotification from "@/hooks/useNotification";
 import { Checkbox } from "@/components/Checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import useSpinner from "@/hooks/useSpinner";
-import { PATH_DASHBOARD } from "@/routes/path";
 import useMessage from "@/hooks/useMessage";
 import { STEP_DEFAULT_TIMEOUT } from "@/enums/enum";
 import { parseNumber, textTrim } from "@/utils/convertUtil";
 import RHFTextarea from "@/components/hook-form/RHFTextarea";
+import { Braces } from "lucide-react";
 
 export default function GotoUrlNewEditForm({
   id,
@@ -106,7 +101,11 @@ export default function GotoUrlNewEditForm({
         </Col>
 
         <Col span={24} className='d-flex justify-content-end mb-5'>
-          <ButtonPrimary type='submit' title={'Lưu'} />
+          <ButtonPrimary
+            type='submit'
+            title={'Lưu'}
+            icon={<Braces />}
+          />
         </Col>
       </Row>
     </FormProvider>

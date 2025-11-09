@@ -68,7 +68,7 @@ export default function Router() {
           children: [
             { path: 'list', element: <ScriptList /> },
             { path: 'create', element: <ScriptNewEdit /> },
-            { path: ':name/edit', element: <ScriptNewEdit /> },
+            { path: ':id/edit', element: <ScriptNewEdit /> },
           ],
         },
         // { path: 'statistics', element: <ThongKe /> },

@@ -21,6 +21,11 @@ const projectProfileSchema = Joi.object({
     'any.required': 'Profile id không được bỏ trống!',
     'string.max': 'Profile id chỉ đươc phép dài tối đa 36 ký tự!',
   }),
+  status: Joi
+    .valid(StatusCommon.UN_ACTIVE, StatusCommon.IN_ACTIVE)
+    .messages({
+      'any.only': 'Trạng thái ví không hợp lệ!'
+    }),
 });
 
 const statusValidation = Joi.object({
@@ -186,8 +191,8 @@ const getAllProfilesByResources = async (req) => {
     };
   });
 
-  const totalJoined = await countByProject(projectId);
-  const totalJoinedDisabled = await countByProjectUnActive(projectId);
+  const totalActive = await countByProject(projectId);
+  const totalUnActive = await countByProjectUnActive(projectId);
   const totalFree = await countByResources(projectId, resources);
 
   return {
@@ -195,8 +200,8 @@ const getAllProfilesByResources = async (req) => {
     pagination: {
       page: parseInt(currentPage, 10),
       totalItems: total,
-      totalItemsJoined: totalJoined,
-      totalItemsJoinedDisabled: totalJoinedDisabled,
+      totalItemsActive: totalActive,
+      totalItemsUnActive: totalUnActive,
       totalItemsFree: totalFree,
       isTabFree: true,
       totalPages,
@@ -275,7 +280,7 @@ const getAllProfilesByProject = async (req) => {
       ${whereClause}
 			GROUP BY p.id
 			) pr ON pr.profile_id = pp.profile_id
-     WHERE pp.project_id = '${projectId}' AND pp.status = '${selectedTab === 'joined' ? StatusCommon.IN_ACTIVE : StatusCommon.UN_ACTIVE}'
+     WHERE pp.project_id = '${projectId}' AND pp.status = '${selectedTab}'
      ORDER BY pp.createdAt DESC
      LIMIT ${Pagination.limit} OFFSET ${offset}
   `;
@@ -299,7 +304,7 @@ const getAllProfilesByProject = async (req) => {
       ${whereClause}
 			GROUP BY p.id
 			) pr ON pr.profile_id = pp.profile_id
-     WHERE pp.project_id = '${projectId}' AND pp.status = '${selectedTab === 'joined' ? StatusCommon.IN_ACTIVE : StatusCommon.UN_ACTIVE}'
+     WHERE pp.project_id = '${projectId}' AND pp.status = '${selectedTab}'
   ) AS subquery
    `;
 
@@ -336,8 +341,8 @@ const getAllProfilesByProject = async (req) => {
     };
   });
 
-  const totalJoined = await countByProject(projectId);
-  const totalJoinedDisabled = await countByProjectUnActive(projectId);
+  const totalActive = await countByProject(projectId);
+  const totalUnActive = await countByProjectUnActive(projectId);
   const totalFree = await countByResources(projectId, resources);
 
   return {
@@ -346,8 +351,8 @@ const getAllProfilesByProject = async (req) => {
     pagination: {
       page: parseInt(currentPage, 10),
       totalItems: total,
-      totalItemsJoined: totalJoined,
-      totalItemsJoinedDisabled: totalJoinedDisabled,
+      totalItemsActive: totalActive,
+      totalItemsUnActive: totalUnActive,
       totalItemsFree: totalFree,
       totalPages,
       isTabFree: false,
@@ -556,7 +561,7 @@ const getAllIdsByProject = async (req) => {
   } = req.query;
 
   let whereClause = `
-     WHERE pp.project_id = '${projectId}' AND pp.status = '${selectedTab === 'joined' ? StatusCommon.IN_ACTIVE : StatusCommon.UN_ACTIVE}'
+     WHERE pp.project_id = '${projectId}' AND pp.status = '${selectedTab}'
 `;
 
   const query = `
@@ -601,7 +606,7 @@ const createProjectProfile = async (body) => {
   });
 
   if (projectProfileExists[0].length > 0) {
-    throw new RestApiException(`Profile đã tồn tại trong dự án này!`);
+    throw new RestApiException(`Profile đang tham gia dự án này!`);
     // throw new RestApiException(`Profile ${profile_name} đã tồn tại trong dự án này!`);
   }
 

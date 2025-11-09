@@ -29,7 +29,7 @@ export const PATH_DASHBOARD = {
   script: {
     list: path(ROOTS_DASHBOARD, '/script/list'),
     create: path(ROOTS_DASHBOARD, '/script/create'),
-    edit: (fileName) => path(ROOTS_DASHBOARD, `/script/${fileName}/edit`),
+    edit: (id) => path(ROOTS_DASHBOARD, `/script/${id}/edit`),
   },
   extension: {
     list: path(ROOTS_DASHBOARD, '/extension/list'),

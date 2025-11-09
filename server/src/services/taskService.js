@@ -8,6 +8,7 @@ const sequelize = require('../configs/dbConnection');
 const Task = require('../models/task');
 const { convertBitToBoolean } = require('../utils/convertUtil');
 const { getProjectById } = require('./projectService');
+const { getScriptNameById, getScriptIdByName } = require('./scriptService');
 
 const taskSchema = Joi.object({
   name: Joi.string().trim().required().max(255).messages({
@@ -22,6 +23,16 @@ const taskSchema = Joi.object({
     'any.required': 'Project id không được bỏ trống!',
     'string.max': 'Project id chỉ đươc phép dài tối đa 36 ký tự!',
   }),
+  script_id: Joi.string()
+    .trim()
+    .max(255)
+    .allow('')
+    .messages({
+      'string.base': 'Script id phải là chuỗi',
+      'string.empty': 'Script id không được bỏ trống!',
+      'any.required': 'Script id không được bỏ trống!',
+      'string.max': 'Script id chỉ đươc phép dài tối đa 255 ký tự!',
+    }),
   points: Joi.number().integer().min(1).max(2000000000)
     .allow(null)
     .messages({
@@ -29,15 +40,6 @@ const taskSchema = Joi.object({
       'number.integer': 'Points phải là số nguyên!',
       'number.min': 'Points phải lớn hơn 0!',
       'number.max': 'Points phải bé hơn 2,000,000,000!',
-    }),
-  script_name: Joi.string().trim()
-    .pattern(/^[a-z0-9]+(?:_[a-z0-9]+)*$/) // chỉ snake_case
-    .max(50)
-    .allow('')
-    .messages({
-      'string.base': 'Tên script phải là chuỗi',
-      'string.max': 'Tên script chỉ đươc phép dài tối đa 50 ký tự!',
-      'string.pattern.base': 'Tên script không hợp lệ!',
     }),
   // Không dùng Joi.required => {name: undefined}, {empty field name} => valid => field ko bao gồm trong data sau khi validate
   // Nhưng khi {name: value} => Joi.string yêu cầu value phải là string và ko empty => sử dụng allow('') để cho phép "value" empty
@@ -67,7 +69,7 @@ const taskSchema = Joi.object({
   //   'date.format': 'Ngày hết hạn phải có định dạng YYYY-MM-DD!',
   //   'any.required': 'Ngày hết hạn không được bỏ trống!',
   // }),
-  type: Joi.required()
+  type: Joi
     .valid(
       TaskType.REG,
       TaskType.LOGIN,
@@ -78,7 +80,11 @@ const taskSchema = Joi.object({
     )
     .messages({
       'any.only': 'Loại task không hợp lệ!',
-      'any.required': 'Loại task không được bỏ trống!',
+    }),
+  status: Joi
+    .valid(StatusCommon.UN_ACTIVE, StatusCommon.IN_ACTIVE)
+    .messages({
+      'any.only': 'Trạng thái task không hợp lệ!'
     }),
 });
 
@@ -86,13 +92,13 @@ const taskStatusValidation = Joi.object({
   status: Joi.required()
     .valid(TaskStatus.TO_DO, TaskStatus.COMPLETED, TaskStatus.TO_REVIEW, TaskStatus.IN_PROGRESS)
     .messages({
-      'any.only': 'Trạng thái công việc không hợp lệ!',
-      'any.required': 'Trạng thái công việc không được bỏ trống!',
+      'any.only': 'Trạng thái task không hợp lệ!',
+      'any.required': 'Trạng thái task không được bỏ trống!',
     }),
 });
 
 const getAllTasksByProjectId = async (req) => {
-  const { page, search, selectedTab } = req.query;
+  const { page, search, selectedTaskTab } = req.query;
   const { projectId } = req.params;
 
   await getProjectById(projectId);
@@ -104,12 +110,13 @@ const getAllTasksByProjectId = async (req) => {
 
   const query = `
     SELECT 
-    t.id, t.name, t.project_id, t.points, t.url, t.script_name, t.description, t.status,
+    t.id, t.name, t.project_id, t.points, t.url, t.script_id, t.description, t.status, t.type,
     t.has_manual, t.order_star, t.createdAt 
     FROM tasks t
     WHERE t.deletedAt IS NULL
       AND t.project_id = :projectId 
       AND t.name LIKE :searchQuery 
+      AND t.type = :type
     ORDER BY 
   CASE 
     WHEN t.order_star IS NOT NULL THEN 0 
@@ -123,7 +130,7 @@ const getAllTasksByProjectId = async (req) => {
   const data = await sequelize.query(query, {
     replacements: {
       projectId,
-      // status: selectedStatus,
+      type: selectedTaskTab,
       searchQuery: `%${search}%`
     },
   });
@@ -134,12 +141,13 @@ SELECT COUNT(*) AS total
     WHERE t.deletedAt IS NULL
       AND t.project_id = :projectId 
       AND t.name LIKE :searchQuery 
+      AND t.type = :type
 `;
 
   const countResult = await sequelize.query(countQuery, {
     replacements: {
       projectId,
-      // status: StatusCommon.IN_ACTIVE,
+      type: selectedTaskTab,
       searchQuery: `%${search}%`
     },
   });
@@ -151,19 +159,42 @@ SELECT COUNT(*) AS total
     return {
       ...item,
       has_manual: convertBitToBoolean(item.has_manual),
+      script_name: item?.script_id ? getScriptNameById(item?.script_id) : '',
     }
   })
+
+  const countByType = await countTaskByType(projectId);
 
   return {
     data: convertedData,
     pagination: {
       page: parseInt(currentPage, 10),
+      totalCountType: countByType,
       totalItems: total,
       totalPages,
+      type: selectedTaskTab,
       hasNext: currentPage < totalPages,
       hasPre: currentPage > 1
     }
   };
+}
+
+const countTaskByType = async (projectId) => {
+  const countQuery = `
+    SELECT 
+      t.type,
+      COUNT(*) AS total
+    FROM tasks t
+    WHERE t.deletedAt IS NULL
+      AND t.project_id = :projectId
+    GROUP BY t.type
+  `;
+
+  const [results] = await sequelize.query(countQuery, {
+    replacements: { projectId },
+  });
+
+  return results;
 }
 
 const getTaskById = async (id) => {
@@ -183,6 +214,7 @@ const createTask = async (body) => {
     where: {
       name: data.name,
       project_id: data.project_id,
+      type: data?.type,
       deletedAt: null,
     }
   });
@@ -207,6 +239,7 @@ const updateTask = async (body) => {
       name: data.name,
       id: { [Op.ne]: id },
       project_id: data.project_id,
+      type: data?.type,
       deletedAt: null,
     }
   });
@@ -233,11 +266,11 @@ const updateTask = async (body) => {
 }
 
 const updateTaskStatus = async (body) => {
-  const { id, status } = body;
-  validateTaskStatus(body);
+  const { id } = body;
+  const data = validateTaskStatus(body);
 
   const [updatedCount] = await Task.update({
-    status: status,
+    status: data.status === StatusCommon.IN_ACTIVE ? StatusCommon.UN_ACTIVE : StatusCommon.IN_ACTIVE,
   }, {
     where: {
       id: id,

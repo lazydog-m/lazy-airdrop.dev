@@ -7,10 +7,11 @@ import useTable from '@/hooks/useTable';
 import { delayApi } from '@/utils/commonUtil';
 import ProjectTaskFilterSearch from './ProjectTaskFilterSearch';
 import ProjectTaskDataTable from './ProjectTaskDataTable';
-import { ButtonPrimary } from '@/components/Button';
+import { ButtonOutlinePrimary, ButtonPrimary } from '@/components/Button';
 import { ClipboardPlus } from 'lucide-react';
 import ProjectTaskNewEditForm from '../../new-edit/ProjectTaskNewEditForm';
-import { StatusCommon } from '@/enums/enum';
+import { StatusCommon, TaskType } from '@/enums/enum';
+import { convertProjectTaskTypeEnumToText } from '@/utils/convertUtil';
 
 const ProjectTaskDataTableMemo = React.memo(ProjectTaskDataTable);
 
@@ -25,9 +26,8 @@ export default function ProjectTaskList({ project = {} }) {
   const { onError } = useMessage();
 
   const [search, setSearch] = useState('');
-  const [selectedStatusItems, setSelectedStatusItems] = useState([StatusCommon.IN_ACTIVE]);
   const [selectedStatusTab, setSelectedStatusTab] = useState('in_complete');
-  const [selectedTaskTab, setSelectedTaskTab] = useState(daily ? 'daily' : 'points');
+  const [selectedTaskTab, setSelectedTaskTab] = useState(daily ? TaskType.DAILY : TaskType.POINTS);
 
   const {
     page,
@@ -38,8 +38,8 @@ export default function ProjectTaskList({ project = {} }) {
     const params = {
       page,
       search,
-      selectedTab: selectedStatusTab,
-      selectedStatusItems,
+      selectedStatusTab,
+      selectedTaskTab,
     }
 
     try {
@@ -77,8 +77,8 @@ export default function ProjectTaskList({ project = {} }) {
   }, [
     search,
     page,
-    selectedStatusItems,
     selectedStatusTab,
+    selectedTaskTab,
   ]);
 
   const handleDeleteData = useCallback((onTrigger = () => { }) => {
@@ -88,8 +88,8 @@ export default function ProjectTaskList({ project = {} }) {
   }, [
     search,
     page,
-    selectedStatusItems,
     selectedStatusTab,
+    selectedTaskTab,
   ]);
 
   const handleClickOpen = () => {
@@ -119,19 +119,7 @@ export default function ProjectTaskList({ project = {} }) {
     onChangePage(1);
   };
 
-  const handleChangeSelectedStatusItems = (label, isChecked) => {
-    setSelectedStatusItems((prev) => {
-      if (isChecked) {
-        return [...prev, label];
-      } else {
-        return prev.filter((item) => item !== label);
-      }
-    });
-    onChangePage(1);
-  };
-
   const handleClearAllSelectedItems = () => {
-    setSelectedStatusItems([]);
     setSearch('');
     onChangePage(1);
   }
@@ -141,7 +129,6 @@ export default function ProjectTaskList({ project = {} }) {
   }, [
     search,
     page,
-    selectedStatusItems,
     selectedStatusTab,
     selectedTaskTab,
   ])
@@ -150,15 +137,17 @@ export default function ProjectTaskList({ project = {} }) {
     <div className=''>
       <ProjectTaskFilterSearch
         action={
-          <ButtonPrimary
-            icon={<ClipboardPlus />}
-            title='Thêm task'
-            onClick={handleClickOpen}
-          />
+          <div className='flex items-center gap-10'>
+            <ButtonPrimary
+              icon={<ClipboardPlus />}
+              title={`Thêm task`}
+              onClick={handleClickOpen}
+            />
+          </div>
         }
-        daily={daily}
 
         onClearAllSelectedItems={handleClearAllSelectedItems}
+        pagination={pagination}
 
         search={search}
         onChangeSearch={handleChangeSearch}
@@ -168,10 +157,6 @@ export default function ProjectTaskList({ project = {} }) {
 
         onChangeSelectedTaskTab={handleChangeSelectedTaskTab}
         selectedTaskTab={selectedTaskTab}
-
-        selectedStatusItems={selectedStatusItems}
-        onChangeSelectedStatusItems={handleChangeSelectedStatusItems}
-        onClearSelectedStatusItems={() => setSelectedStatusItems([])}
       />
       <ProjectTaskDataTableMemo
         pagination={pagination}
@@ -184,20 +169,21 @@ export default function ProjectTaskList({ project = {} }) {
         projectName={project?.name}
         projectId={project?.id}
         projectDailyTaskRefresh={project?.daily_tasks_refresh}
-        daily={daily}
+
+        selectedTaskTab={selectedTaskTab}
       />
 
       <Modal
         isOpen={open}
         onClose={handleClose}
-        title={"Thêm mới task hằng ngày"}
+        title={`Thêm mới task ${convertProjectTaskTypeEnumToText(selectedTaskTab)}`}
         content={
           <ProjectTaskNewEditForm
+            selectedTaskTab={selectedTaskTab}
             projectName={project?.name}
             projectId={project?.id}
             onCloseModal={handleClose}
             onUpdateData={handleUpdateData}
-            daily={daily}
           />
         }
       />

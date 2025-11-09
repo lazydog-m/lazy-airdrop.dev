@@ -3,7 +3,6 @@ const api = express.Router();
 const apiRes = require('../utils/apiResponse');
 const {
   createScript,
-  getScriptByFileName,
   updateScript,
   getAllScripts,
   deleteScript,
@@ -11,7 +10,10 @@ const {
   openProfile,
   runScript,
   stopScript,
-  getAllScriptsByProject
+  updateScriptStatus,
+  getAllScriptsByProject,
+  getScriptById,
+  getCurrentBrowserTest,
 } = require('../services/scriptService');
 
 // Get all scripts
@@ -24,8 +26,8 @@ api.get('/', async (req, res, next) => {
   }
 });
 
-// Get all scripts by project
-api.get('/project/contains-name', async (req, res, next) => {
+// Get all scripts
+api.get('/project/:id', async (req, res, next) => {
   try {
     const scripts = await getAllScriptsByProject(req);
     return apiRes.toJson(res, scripts);
@@ -34,10 +36,20 @@ api.get('/project/contains-name', async (req, res, next) => {
   }
 });
 
-// Get script by fileName
-api.get('/:fileName', async (req, res, next) => {
+// Get current profile test
+api.get('/profile-test/current', async (req, res, next) => {
   try {
-    const script = await getScriptByFileName(req.params.fileName);
+    const openning = getCurrentBrowserTest();
+    return apiRes.toJson(res, openning);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get script by fileName
+api.get('/:id', async (req, res, next) => {
+  try {
+    const script = await getScriptById(req.params.id);
     return apiRes.toJson(res, script);
   } catch (error) {
     next(error);
@@ -65,7 +77,7 @@ api.get('/close-profile/test', async (req, res, next) => {
 
 api.get('/run-script/test', async (req, res, next) => {
   try {
-    await runScript(req.query.code);
+    await runScript(req);
     return apiRes.toJson(res, null);
   } catch (error) {
     next(error);
@@ -98,6 +110,17 @@ api.put('/', async (req, res, next) => {
   try {
     const updatedScript = await updateScript(body);
     return apiRes.toJson(res, updatedScript);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update status script
+api.put('/status', async (req, res, next) => {
+  const { body } = req;
+  try {
+    const updatedStatus = await updateScriptStatus(body);
+    return apiRes.toJson(res, updatedStatus);
   } catch (error) {
     next(error);
   }
