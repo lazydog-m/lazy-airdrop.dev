@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
-import { Chrome, CirclePause, CirclePlay, CirclePlus, Grip, ListFilter, Pause, Play } from 'lucide-react';
+import { Chrome, CirclePause, CirclePlay, CirclePlus, Grip, ListFilter, Pause, Play, Vault } from 'lucide-react';
 import Popover from "@/components/Popover";
-import { ButtonGhost, ButtonInfo, ButtonOrange, ButtonOutline, ButtonOutlinePrimary, ButtonOutlineTags, ButtonPrimary } from '@/components/Button';
+import { ButtonGhost, ButtonInfo, ButtonOrange, ButtonOutline, ButtonOutlineInfo, ButtonOutlinePrimary, ButtonOutlineTags, ButtonPrimary } from '@/components/Button';
 import { Color, StatusCommon } from '@/enums/enum';
 import { Badge } from '@/components/ui/badge';
 import useDebounce from '@/hooks/useDebounce';
@@ -14,6 +14,8 @@ import { DropdownCheckboxMenu } from '@/components/Checkbox';
 import { RESOURCES } from '@/commons/Resources';
 import InputUi from '@/components/InputUi';
 import useConfirm from '@/hooks/useConfirm';
+import Modal from '@/components/Modal';
+import Select from '@/components/Select';
 
 export default function ProfileFilterSearch({
   selectedStatusItems,
@@ -38,6 +40,8 @@ export default function ProfileFilterSearch({
   openningIds = new Set(),
 }) {
 
+  const [open, setOpen] = useState(false);
+  const [scale, setScale] = useState(1);
   const { onOpen, onClose } = useSpinner();
   const { onSuccess, onError } = useMessage();
   const { showLoading, swalClose } = useConfirm();
@@ -57,6 +61,7 @@ export default function ProfileFilterSearch({
   const openProfiles = async () => {
     const params = {
       ids: selected,
+      scale,
     }
 
     try {
@@ -109,35 +114,37 @@ export default function ProfileFilterSearch({
   }
 
   const handleOpenProfiles = () => {
-    if (selected.length > 0) {
-      openProfiles();
-    }
+    openProfiles();
   }
 
   const handleCloseProfiles = () => {
-    if (selected.length > 0) {
-      closeProfiles();
-    }
+    closeProfiles();
   }
 
   const handleSortProfileLayout = () => {
-    if (openningIds.size > 0) {
-      sortProfileLayouts();
-    }
+    sortProfileLayouts();
   }
 
-  return (
-    <div className="mt-20 justify-content-between align-items-center flex">
-      <div className="filter-search d-flex gap-10">
-        <InputUi
-          placeholder='Tìm kiếm profiles ...'
-          style={{ width: '250px' }}
-          className='custom-input'
-          value={filterSearch}
-          onChange={(event) => setFilterSearch(event.target.value)}
-        />
+  // const handleClickOpen = () => {
+  //   setOpen(true);
+  // };
+  //
+  // const handleClose = () => {
+  //   setOpen(false);
+  // };
 
-        <div className="filters-button d-flex gap-10">
+  return (
+    <>
+      <div className="mt-20 justify-content-between align-items-center flex">
+        <div className="filter-search d-flex gap-10">
+          <InputUi
+            placeholder='Tìm kiếm profiles ...'
+            style={{ width: '250px' }}
+            className='custom-input'
+            value={filterSearch}
+            onChange={(event) => setFilterSearch(event.target.value)}
+          />
+
           <Popover className='button-dropdown-filter-checkbox'
             trigger={
               <ButtonOutlineTags
@@ -200,49 +207,58 @@ export default function ProfileFilterSearch({
               onClick={clearAll}
             />
           }
-
         </div>
-
-      </div>
-      <div className='flex items-center gap-10'>
-        {selected.length > 0 &&
-          <>
-            <ButtonInfo
-              style={{
-                opacity: loadingIds.size > 0 ? '0.5' : '1',
-                pointerEvents: loadingIds.size > 0 ? 'none' : '',
-              }}
-              onClick={handleOpenProfiles}
-              icon={<Chrome />}
-              title={'Open'}
-            />
-
-            <ButtonOrange
-              style={{
-                opacity: loadingIds.size > 0 ? '0.5' : '1',
-                pointerEvents: loadingIds.size > 0 ? 'none' : '',
-              }}
-              onClick={handleCloseProfiles}
-              icon={<Chrome />}
-              title={'Close'}
-            />
-            {openningIds.size > 0 &&
-              <ButtonOutline
-                style={{
-                  opacity: loadingIds.size > 0 ? '0.5' : '1',
-                  pointerEvents: loadingIds.size > 0 ? 'none' : '',
-                }}
-                onClick={handleSortProfileLayout}
-                icon={<Grip />}
-                title={'Sắp xếp'}
-              />
-            }
-          </>
-        }
       </div>
 
+      <div className='flex items-center gap-10 mt-10'>
+        <Select
+          form={false}
+          style={{ width: 'auto' }}
+          value={scale}
+          // prefix='Scale'
+          onValueChange={(value) => setScale(value)}
+          convertItem={(value) => `${value * 100}%`}
+          items={[1, 0.5, 0.4, 0.3]}
+        />
+        <ButtonInfo
+          style={{
+            opacity: (selected.length <= 0 || loadingIds.size > 0) ? '0.5' : '1',
+            pointerEvents: (selected.length <= 0 || loadingIds.size > 0) ? 'none' : '',
+          }}
+          onClick={handleOpenProfiles}
+          icon={<Chrome />}
+          title={`Open`}
+        />
 
-    </div>
+        <ButtonOrange
+          style={{
+            opacity: (selected.length <= 0 || loadingIds.size > 0) ? '0.5' : '1',
+            pointerEvents: (selected.length <= 0 || loadingIds.size > 0) ? 'none' : '',
+          }}
+          onClick={handleCloseProfiles}
+          icon={<Chrome />}
+          title={'Close'}
+        />
+        <ButtonOutline
+          style={{
+            opacity: (openningIds.size <= 0) ? '0.5' : '1',
+            pointerEvents: (openningIds.size <= 0) ? 'none' : '',
+          }}
+          onClick={handleSortProfileLayout}
+          icon={<Grip />}
+          title={'Sắp xếp'}
+        />
+        <ButtonInfo
+          style={{
+            opacity: (openningIds.size <= 0) ? '0.5' : '1',
+            pointerEvents: (openningIds.size <= 0) ? 'none' : '',
+          }}
+          // onClick={handleSortProfileLayout}
+          icon={<CirclePlay />}
+          title={'Run with script'}
+        />
+      </div>
+    </>
   )
 }
 

@@ -1,7 +1,7 @@
 import { Paper, Table, TableBody, TableCell, TableContainer, TableRow } from "@mui/material";
 import { Inbox } from "lucide-react";
 
-export default function EmptyData({ message = 'No data', table = true }) {
+export default function EmptyData({ message = 'Empty', table = true }) {
 
   if (table) {
     return (

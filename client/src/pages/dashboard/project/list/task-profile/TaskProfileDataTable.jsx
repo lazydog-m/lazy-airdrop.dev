@@ -2,10 +2,10 @@ import * as React from 'react';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 import DataTable from '@/components/DataTable';
-import { ButtonIcon, ButtonOutline, ButtonPrimary, ButtonOutlinePrimary, ButtonOutlineInfo, ButtonOrange, ButtonInfo, ButtonOutlineOrange, ButtonGhost } from '@/components/Button';
-import { AiOutlineFileDone } from "react-icons/ai";
+import { ButtonIcon, ButtonOutline, ButtonPrimary, ButtonOutlinePrimary, ButtonOutlineInfo, ButtonOrange, ButtonInfo, ButtonOutlineOrange, ButtonGhost, ButtonSuccess } from '@/components/Button';
+import { AiOutlineFileDone, AiOutlineX } from "react-icons/ai";
 import { convertEmailToEmailUsername, darkenColor, lightenColor } from '@/utils/convertUtil';
-import { CalendarCheck, CheckCheck, Chrome, CircleCheckBig, CirclePlay, ClipboardCheck, Loader, LogIn, LogOut, Play, UserRoundCheck, } from 'lucide-react';
+import { CalendarCheck, CalendarCheck2, CheckCheck, Chrome, CircleCheckBig, CirclePlay, CircleSlash2, CircleX, ClipboardCheck, ClipboardMinus, Loader, LogIn, LogOut, Play, SquareCheckBig, SquareX, UserRoundCheck, X, } from 'lucide-react';
 import { Color, StatusCommon } from '@/enums/enum';
 import Modal from '@/components/Modal';
 import useSpinner from '@/hooks/useSpinner';
@@ -20,6 +20,7 @@ import { Checkbox } from '@/components/Checkbox';
 import { ResourceIconCheck } from '@/commons/Resources';
 import { BadgePrimary, BadgePrimaryOutline } from '@/components/Badge';
 import { Badge } from '@/components/ui/badge';
+import { formatNumberVN } from '@/utils/commonUtil';
 
 const DataTableMemo = React.memo(DataTable);
 
@@ -37,8 +38,7 @@ export default function TaskProfileDataTable({
 
   resources = [],
   projectId,
-  taskId,
-  taskUrl,
+  task,
 
   onSelectAllData,
   onClearAllData,
@@ -100,14 +100,15 @@ export default function TaskProfileDataTable({
     // const profileName = convertEmailToEmailUsername(profile_email);
     const body = {
       project_profile_id: id,
-      task_id: taskId,
+      task_id: task?.id,
       // profile_name: profileName,
     };
-    completeTask(body);
+    showConfirm(`Xác nhận đã hoàn thành task cho  '${convertEmailToEmailUsername(profile_email)}'?`, () => completeTask(body))
+      ;
   }
 
   const triggerPost = () => {
-    onSuccess(`Tham gia dự án thành công!`);
+    onSuccess(`Đã hoàn thành!`);
     swalClose();
   }
 
@@ -154,7 +155,7 @@ export default function TaskProfileDataTable({
 
   const openProfile = async (id) => {
     const params = {
-      url: taskUrl || '',
+      url: task?.url || '',
     }
 
     try {
@@ -187,6 +188,7 @@ export default function TaskProfileDataTable({
   const columns = [
     { header: 'Tên Profile', align: 'left' },
     { header: 'Total Points', align: 'left' },
+    { header: `Trạng Thái`, align: 'left' },
     // { header: 'Tài Nguyên Yêu Cầu', align: 'left' },
     // { header: 'Log', align: 'left' },
     // !pagination?.isTabFree && { header: 'Trạng Thái', align: 'left' },
@@ -212,18 +214,34 @@ export default function TaskProfileDataTable({
         </TableCell>
         <TableCell align="left">
           <BadgePrimaryOutline>
-            {`${row?.total_points || '0'}`}
+            {`${formatNumberVN(row?.total_points) || '0'}`}
           </BadgePrimaryOutline>
         </TableCell>
         <TableCell align="left">
+          <Badge className='badge-default bdr gap-1 items-center select-none'
+            style={{
+              backgroundColor: `${darkenColor(Color.ORANGE)}`,
+              borderColor: `${lightenColor(Color.ORANGE)}`,
+              color: 'white',
+            }}
+          >
+            <span className='flex gap-6'>
+              <AiOutlineX size={'14px'} className='mt-1' />
+              {/* <CheckCheck size={'14.5px'} className='mt-1' /> */}
+              {`Chưa hoàn thành`}
+              {/* {`Đã hoàn thành`} */}
+            </span>
+          </Badge>
+        </TableCell>
+        <TableCell align="left">
           <div className='d-flex gap-30'>
-            <ButtonIcon
+            <ButtonOutline
               style={{
                 height: 35,
               }}
-              onClick={() => handleComplete(row?.id, row?.email)}
-              variant='ghost'
-              icon={<AiOutlineFileDone className='!size-4.5' color={Color.SUCCESS} />}
+              onClick={() => handleComplete(row?.pp_id, row?.email)}
+              icon={<SquareCheckBig color={Color.SUCCESS} />}
+              title='Xong'
             />
             {openningIds.has(row.id) ?
               <ButtonOrange

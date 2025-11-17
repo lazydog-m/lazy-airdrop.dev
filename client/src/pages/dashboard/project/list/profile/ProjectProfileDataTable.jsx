@@ -18,6 +18,7 @@ import CopyButton from '@/components/CopyButton';
 import { Checkbox } from '@/components/Checkbox';
 import { ResourceIconCheck } from '@/commons/Resources';
 import { BadgePrimary, BadgePrimaryOutline } from '@/components/Badge';
+import { formatNumberVN } from '@/utils/commonUtil';
 
 const DataTableMemo = React.memo(DataTable);
 
@@ -162,7 +163,7 @@ export default function ProjectProfileDataTable({
         {!pagination?.isTabFree &&
           <TableCell align="left">
             <BadgePrimaryOutline>
-              {`${row?.total_points || '0'}`}
+              {`${formatNumberVN(row?.total_points) || '0'}`}
             </BadgePrimaryOutline>
           </TableCell>
         }

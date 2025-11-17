@@ -7,20 +7,12 @@ import useTable from '@/hooks/useTable';
 import { delayApi } from '@/utils/commonUtil';
 import TaskProfileFilterSearch from './TaskProfileFilterSearch';
 import TaskProfileDataTable from './TaskProfileDataTable';
-import { ButtonDanger, ButtonInfo, ButtonOrange, ButtonOutlinePrimary, ButtonPrimary } from '@/components/Button';
-import { Chrome, CirclePlay, ClipboardPlus, LogIn, LogOut, ThumbsDownIcon, ThumbsUpIcon, UserMinus, UserPlus, UserRoundMinus, UserRoundPlus } from 'lucide-react';
-import { Color, StatusCommon } from '@/enums/enum';
 import useConfirm from '@/hooks/useConfirm';
-import { Button } from '@/components/ui/button';
-import {
-  ButtonGroup,
-  ButtonGroupSeparator,
-} from "@/components/ui/button-group"
 import useSocket from '@/hooks/useSocket';
 
 const TaskProfileDataTableMemo = React.memo(TaskProfileDataTable);
 
-export default function TaskProfileList({ projectId = '', projectName = '', task = {} }) {
+export default function TaskProfileList({ projectId = '', task = {} }) {
   const [open, setOpen] = useState(false); // modal
   const [data, setData] = useState([]);
   const [pagination, setPagination] = useState({});
@@ -32,7 +24,8 @@ export default function TaskProfileList({ projectId = '', projectName = '', task
   const socket = useSocket();
 
   const [search, setSearch] = useState('');
-  const [selectedTab, setSelectedTab] = useState(StatusCommon.IN_COMPLETE);
+  const [selectedTab, setSelectedTab] = useState(task?.script_name ? 'auto' : 'manual');
+  const [selectedStatusTab, setSelectedStatusTab] = useState('all');
 
   const {
     onSelectRow,
@@ -189,6 +182,13 @@ export default function TaskProfileList({ projectId = '', projectName = '', task
 
   const handleChangeSelectedTab = (selected) => {
     setSelectedTab(selected);
+    // setSelectedStatusTab('all');
+    onChangePage(1);
+    setSelected([]);
+  };
+
+  const handleChangeSelectedStatusTab = (selected) => {
+    setSelectedStatusTab(selected);
     onChangePage(1);
     setSelected([]);
   };
@@ -261,12 +261,7 @@ export default function TaskProfileList({ projectId = '', projectName = '', task
   return (
     <div className='overflow-hidden'>
       <TaskProfileFilterSearch
-        action={
-          <>
-          </>
-        }
         pagination={pagination || {}}
-        projectName={projectName}
 
         onClearAllSelectedItems={handleClearAllSelectedItems}
 
@@ -276,7 +271,11 @@ export default function TaskProfileList({ projectId = '', projectName = '', task
         onChangeSelectedTab={handleChangeSelectedTab}
         selectedTab={selectedTab}
 
+        onChangeSelectedStatusTab={handleChangeSelectedStatusTab}
+        selectedStatusTab={selectedStatusTab}
+
         taskUrl={task?.url}
+        projectId={projectId}
 
         selected={selected}
 
@@ -295,8 +294,7 @@ export default function TaskProfileList({ projectId = '', projectName = '', task
         onUpdateData={handleUpdateData}
         onDeleteData={handleDeleteData}
 
-        taskId={task?.id}
-        taskUrl={task?.url}
+        task={task}
         // projectId={projectId}
 
         selected={selected}

@@ -8,6 +8,11 @@ export const delay = (callback, ms = 500) => {
   setTimeout(callback, ms);
 };
 
+export const formatNumberVN = (num) => {
+  if (num == null) return '';
+  return num.toLocaleString('vi-VN');
+};
+
 // script
 export const randomDelay = () => {
   const delays = [5000, 6000, 7000, 8000, 9000, 10000];
@@ -79,7 +84,7 @@ export const createCommentHeader = ({ action = '', target = '', description = ''
   } else {
     desc = [
       "// 🎯 Description:",
-      ...lines.map(line => `//   💬 ${line}`)
+      ...lines.map(line => `//   🡆 ${line}`)
     ].join("\n");
   }
 

@@ -1,12 +1,21 @@
 const express = require('express');
 const api = express.Router();
 const apiRes = require('../utils/apiResponse');
-const { getAllProfilesByProjectTask, createTaskProfile, } = require('../services/taskProfileService');
+const { getAllProfilesByProjectTask, createTaskProfile, runTaskProfiles, } = require('../services/taskProfileService');
 
 // Get all profiles by project task
 api.get('/:projectId', async (req, res, next) => {
   try {
     const profiles = await getAllProfilesByProjectTask(req);
+    return apiRes.toJson(res, profiles);
+  } catch (error) {
+    next(error);
+  }
+});
+
+api.get('/:projectId/run', async (req, res, next) => {
+  try {
+    const profiles = await runTaskProfiles(req);
     return apiRes.toJson(res, profiles);
   } catch (error) {
     next(error);

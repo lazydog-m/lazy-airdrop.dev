@@ -1,1 +1,159 @@
+@use "sass:color";
 
+$g1: #E2574C;
+$g2: #2EAD33;
+
+/* Tạo gradient chính */
+$grad-main: linear-gradient(45deg, $g1, $g2);
+
+/* Tạo shading THỰC SỰ 3D */
+$grad-right: linear-gradient(45deg,
+    color.adjust($g1, $lightness: -20%),
+    color.adjust($g2, $lightness: -20%));
+
+$grad-top: linear-gradient(45deg,
+    color.adjust($g1, $lightness: +15%),
+    color.adjust($g2, $lightness: +15%));
+
+$shadow: linear-gradient(45deg, #230b0a, #041607);
+
+.boxes {
+  --size: 32px;
+  --duration: 800ms;
+  height: calc(var(--size) * 2);
+  width: calc(var(--size) * 3);
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(60deg) rotateZ(45deg);
+}
+
+// .box>div {
+//   backface-visibility: hidden;
+//   opacity: 1;
+//   animation: fadeCube var(--duration) linear infinite;
+// }
+
+// @keyframes fadeCube {
+//
+//   0%,
+//   100% {
+//     opacity: 1;
+//   }
+//
+//   50% {
+//     opacity: 0;
+//   }
+// }
+
+
+.box {
+  width: var(--size);
+  height: var(--size);
+  position: absolute;
+  transform-style: preserve-3d;
+
+  &:nth-child(1) {
+    transform: translate(100%, 0);
+    animation: box1 var(--duration) linear infinite;
+  }
+
+  &:nth-child(2) {
+    transform: translate(0, 100%);
+    animation: box2 var(--duration) linear infinite;
+  }
+
+  &:nth-child(3) {
+    transform: translate(100%, 100%);
+    animation: box3 var(--duration) linear infinite;
+  }
+
+  &:nth-child(4) {
+    transform: translate(200%, 0);
+    animation: box4 var(--duration) linear infinite;
+  }
+
+  &>div {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    transform: translateZ(calc(var(--size) / 2));
+  }
+
+  /* FRONT */
+  &>div:nth-child(1) {
+    background: $grad-main;
+    transform: rotateY(0deg) translateZ(calc(var(--size)/2));
+  }
+
+  /* RIGHT */
+  &>div:nth-child(2) {
+    background: $grad-right;
+    transform: rotateY(90deg) translateZ(calc(var(--size)/2));
+  }
+
+  /* TOP */
+  &>div:nth-child(3) {
+    background: $grad-top;
+    transform: rotateX(-90deg) translateZ(calc(var(--size)/2));
+  }
+
+  /* SHADOW bottom */
+  &>div:nth-child(4) {
+    background: $shadow;
+    transform: translateZ(calc(var(--size) * -3));
+  }
+}
+
+/* Animations giữ nguyên */
+@keyframes box1 {
+
+  0%,
+  50% {
+    transform: translate(100%, 0);
+  }
+
+  100% {
+    transform: translate(200%, 0);
+  }
+}
+
+@keyframes box2 {
+  0% {
+    transform: translate(0, 100%);
+  }
+
+  50% {
+    transform: translate(0, 0);
+  }
+
+  100% {
+    transform: translate(100%, 0);
+  }
+}
+
+@keyframes box3 {
+
+  0%,
+  50% {
+    transform: translate(100%, 100%);
+  }
+
+  100% {
+    transform: translate(0, 100%);
+  }
+}
+
+@keyframes box4 {
+  0% {
+    transform: translate(200%, 0);
+  }
+
+  50% {
+    transform: translate(200%, 100%);
+  }
+
+  100% {
+    transform: translate(100%, 100%);
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from "react-router-dom"
 // form
 import { ButtonGhost, ButtonIcon, ButtonOutline, ButtonPrimary } from "@/components/Button";
@@ -11,12 +11,12 @@ import useMessage from "@/hooks/useMessage";
 import { HeaderLabel } from "@/components/HeaderSection";
 import { Globe, MousePointerClick, ShieldCheck, Text, Type, Wallet, Clock, GripVertical, Trash2, ListFilter, CopyPlus, Code, Play, Info, FileJson, FileJson2, CodeXml, Braces, Workflow, Cog } from "lucide-react";
 import Collapse from "@/components/Collapse";
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+// import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Combobox from '@/components/Combobox';
 import { Input } from '@/components/ui/input';
 import ScriptNewEditForm from './ScriptNewEditForm';
 import { randomDelay } from "@/utils/commonUtil";
-import img from '../../../../assets/img/playwright.png';
 
 const ScriptContainer = ({ children, ...other }) => {
   return (
@@ -178,18 +178,20 @@ export default function ScriptNewEditDetails({
     );
   };
 
-  const handleClick = (event) => {
-    const rows = document.querySelectorAll('.main-logic-item');
-    rows.forEach((row) => row.classList.remove('active-logic'));
+  // const handleClick = (event) => {
+  //   const rows = document.querySelectorAll('.main-logic-item');
+  //   rows.forEach((row) => row.classList.remove('active-logic'));
+  //
+  //   const rowElement = event.target.closest('.main-logic-item');
+  //   if (rowElement) {
+  //     rowElement.classList.add('active-logic');
+  //   }
+  // };
 
-    const rowElement = event.target.closest('.main-logic-item');
-    if (rowElement) {
-      rowElement.classList.add('active-logic');
-    }
-  };
+  const [activeId, setActiveId] = useState(null);
 
-  const handleSetFormAction = (e, id, form, name, icon) => {
-    handleClick(e);
+  const handleSetFormAction = (id, form, name, icon) => {
+    setActiveId(id);
     setFormAction({
       id,
       form,
@@ -230,7 +232,9 @@ export default function ScriptNewEditDetails({
 
   return (
     <>
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext
+        onDragEnd={handleDragEnd}
+      >
         <ScriptContainer>
 
           <NavActions>
@@ -270,7 +274,9 @@ export default function ScriptNewEditDetails({
             </div>
             <UnderlineHeader className='mt-10' />
 
-            <div className="mt-20">
+
+            <div className="mt-20"
+            >
               <Droppable droppableId="main-logic">
                 {(prov) => (
                   <div {...prov.droppableProps} ref={prov.innerRef}>
@@ -282,8 +288,7 @@ export default function ScriptNewEditDetails({
                       >
                         {(prov) => (
                           <div
-                            onClick={(e) => handleSetFormAction(
-                              e,
+                            onClick={() => handleSetFormAction(
                               item.id,
                               <item.formComponent
                                 key={item.id}
@@ -297,11 +302,13 @@ export default function ScriptNewEditDetails({
                               item.icon,
                             )}
                             // lag click faster luc nao lam thu xem co thay kho chiu ko
-                            className={`main-logic-item mt-7 pointer justify-content-between d-flex fs-14 fw-400 gap-10 select-none align-items-center`}
+                            className={`main-logic-item mt-7 pointer justify-content-between d-flex fs-14 fw-400 gap-10 select-none align-items-center ${activeId === item.id ? 'active-logic' : ''
+                              }`}
                             ref={prov.innerRef}
                             {...prov.draggableProps}
                             {...prov.dragHandleProps}
                           >
+
                             <ActionLogicItem idx={idx} item={item} key={item.id} />
 
                             <div className='d-flex logic-items-icon'>

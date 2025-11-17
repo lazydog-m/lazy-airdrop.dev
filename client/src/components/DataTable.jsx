@@ -9,7 +9,7 @@ import { Checkbox } from './Checkbox';
 import TablePagination from './TablePagination';
 import Popover from './Popover';
 import { DropdownMenu } from './DropdownMenu';
-import { Check, ChevronsUpDown, Inbox } from 'lucide-react';
+import { Check, ChevronsUpDown, GripVertical } from 'lucide-react';
 import EmptyData from './EmptyData';
 import {
   ContextMenu,
@@ -17,6 +17,9 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import useSpinner from '@/hooks/useSpinner';
+import { ButtonIcon } from './Button';
+import logo from '../assets/img/playwright.png'
 
 export default function DataTable({
   columns = [],
@@ -38,6 +41,8 @@ export default function DataTable({
   selectAll = false,
   ...other
 }) {
+
+  const { isLoading } = useSpinner();
 
   return (
     <div {...other}>
@@ -128,12 +133,13 @@ export default function DataTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {data?.length > 0 ? data :
-              <TableRow>
-                <TableCell colSpan={columns?.length + 1}>
-                  <EmptyData />
-                </TableCell>
-              </TableRow>
+            {
+              data?.length > 0 ? data :
+                <TableRow>
+                  <TableCell colSpan={columns?.length + 1}>
+                    <EmptyData />
+                  </TableCell>
+                </TableRow>
             }
           </TableBody>
         </Table>
@@ -172,3 +178,29 @@ const ContextMenuRight = ({ trigger, onSelectAllData, onClearAllData }) => {
     </ContextMenu>
   )
 }
+
+const SkeletonRow = ({ columns }) => {
+  return (
+    <TableRow>
+      <TableCell>
+        <Checkbox
+          defaultChecked={false}
+          checked={false}
+        // style={{ opacity: 0.7 }}
+        />
+      </TableCell>
+
+      {columns.map((col, i) => {
+        if (col !== '') {
+          return (
+            <TableCell key={i}>
+              <div className="rounded-md skeleton-block h-9 w-30"></div>
+            </TableCell>
+          );
+        }
+        return <ButtonIcon icon={<GripVertical />} />; // Return null if col is not empty to avoid React warning
+      })}
+    </TableRow>
+  );
+};
+

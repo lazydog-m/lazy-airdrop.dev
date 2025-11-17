@@ -78,6 +78,7 @@ export default function RHFTextarea({
             }}
             style={{ minHeight: height, maxHeight: height }}
             {...field}
+            {...other}
           />
           <ErrorMessage message={error?.message} />
         </>

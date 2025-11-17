@@ -39,13 +39,13 @@ const closingByApiIds = new Set();
 let isStop = false;
 const setIsStop = (value) => { isStop = value; };
 
-// chạy sript tối đa 21 profile 1 luồng
+// Chạy sript tối đa 36 profile 1 luồng
 function createGridLayoutScript(profileCount) {
   const profileWidth = config.PROFILE_SCRIPT_WIDTH;
   const profileHeight = config.PROFILE_SCRIPT_HEIGHT;
 
   // Tính số cột sao cho vừa với độ rộng màn hình
-  const cols = Math.floor(config.SCREEN_WIDTH_FULL / profileWidth);
+  const cols = Math.floor(config.SCREEN_WIDTH_FULL / (profileWidth * 0.4));
 
   const layouts = [];
   for (let i = 0; i < profileCount; i++) {
@@ -87,7 +87,7 @@ function getLayout(layout) {
   const defaultLayout = {
     x: 0,
     y: 0,
-    width: config.SCREEN_WIDTH / 2,
+    width: config.SCREEN_WIDTH,
     height: config.SCREEN_HEIGHT
   }
 
@@ -159,41 +159,41 @@ async function closeExtensionPages(context, browser) {
     }
 
     context.on('page', async (page) => {
-      page.on('framenavigated', async (frame) => {
-        // Các page ext (của các ví như metamask, sui...) sẽ được mở bởi các case sau:
-        // 1. Chạy profile với 'load-extension' (tùy ví).
-        // 2. Do click vào ext ví trên toolbar nếu như ví chưa login ví (tùy ví).
-        // 3. Connect ví trong các dApp airdrop sẽ mở popup page ext.
+      // page.on('framenavigated', async (frame) => {
+      // Các page ext (của các ví như metamask, sui...) sẽ được mở bởi các case sau:
+      // 1. Chạy profile với 'load-extension' (tùy ví).
+      // 2. Do click vào ext ví trên toolbar nếu như ví chưa login ví (tùy ví).
+      // 3. Connect ví trong các dApp airdrop sẽ mở popup page ext.
 
-        // Khi 1 page mới được mở, dù có điều hướng đến trang nào đó thì Url của page đó vẫn
-        // là blank. Vì nó nhận Url sau khi page mới được mở chứ ko đợi điều hướng đến trang
-        // cụ thể rồi mới nhận Url. Ngay cả khi dùng newPage.goto() thì trươc đó newPage
-        // cũng đã được mở từ context rồi mới điều hướng trang nên Url cũng sẽ là blank.
+      // Khi 1 page mới được mở, dù có điều hướng đến trang nào đó thì Url của page đó vẫn
+      // là blank. Vì nó nhận Url sau khi page mới được mở chứ ko đợi điều hướng đến trang
+      // cụ thể rồi mới nhận Url. Ngay cả khi dùng newPage.goto() thì trươc đó newPage
+      // cũng đã được mở từ context rồi mới điều hướng trang nên Url cũng sẽ là blank.
 
-        // page.on('framenavigated', async (frame) => {})
-        // Đợi page mới mở điều hướng đến trang đích rồi mới nhận Url => phù hợp các case
-        // Các page ext ví được mở bởi các case trên sẽ giống như kiểu framenavigated
+      // page.on('framenavigated', async (frame) => {})
+      // Đợi page mới mở điều hướng đến trang đích rồi mới nhận Url => phù hợp các case
+      // Các page ext ví được mở bởi các case trên sẽ giống như kiểu framenavigated
 
-        const url = frame.url();
+      const url = page.url();
 
-        if (closedExtCount >= startupExtTotal) {
-          // closed đủ số ext cần close rồi thì thôi
-          return;
-        }
+      if (closedExtCount >= startupExtTotal) {
+        // closed đủ số ext cần close rồi thì thôi
+        return;
+      }
 
-        if (url.startsWith('chrome-extension://')) {
-          try {
-            await page.close();
-            closedExtCount++; // case bi thieu count se ko done dc loading (mo cung luc se bi)
+      if (url.startsWith('chrome-extension://')) {
+        try {
+          await page.close();
+          closedExtCount++; // case bi thieu count se ko done dc loading (mo cung luc se bi)
 
-            if (closedExtCount >= startupExtTotal) { //  chẳng may đóng ko đủ thì bị treo api
-              resolve(true);
-            }
-          } catch (err) {
-            console.error(`Lỗi đóng page exception:`, err);
+          if (closedExtCount >= startupExtTotal) { //  chẳng may đóng ko đủ thì bị treo api
+            resolve(true);
           }
+        } catch (err) {
+          console.error(`Lỗi đóng page exception:`, err);
         }
-      })
+      }
+      // })
     });
   });
 }
@@ -225,7 +225,7 @@ function closeProfileListener(browser, profileId) {
 
 const getOs = () => process.platform;
 
-async function openProfile({ profile, port, layout, activate = false, runScript = false }) {
+async function openProfile({ profile, port, layout, activate = false, scale = 1 }) {
   const profilePath = path.join(config.PROFILE_DIR, profile.name);
 
   if (!fs.existsSync(profilePath)) {
@@ -244,6 +244,7 @@ async function openProfile({ profile, port, layout, activate = false, runScript 
 
   const chromeFlags = [
     // `--app=data:text/html,<html></html>`,
+    `--force-device-scale-factor=${scale}`,
     `--window-position=${profileLayout.x},${profileLayout.y}`,
     `--window-size=${profileLayout.width},${profileLayout.height}`,
     '--no-default-browser-check',
@@ -290,6 +291,10 @@ async function openProfile({ profile, port, layout, activate = false, runScript 
     // có thể bị lỗi 'newPage || open new tab' khi close nhanh bằng X trong lúc đang gọi page từ context
     // xảy ra khi context đã bị detach do browser bị disconnect
     page = context.pages()[0] || await context.newPage();
+
+    injectProfileBadge(context, page, profile.name).catch((error) => {
+      // console.error(error)
+    });
 
     // ko await khi mở tay profile tránh load lâu api
     // if (runScript) {
@@ -467,6 +472,67 @@ function closeProfileTestListener(browser) {
       console.error('Có lỗi khi đóng hồ sơ', error.message);
     }
   });
+}
+
+async function injectProfileBadge(context, page, profileName) {
+  const css = `
+    .__profile-badge {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      margin: 0 !important;
+      padding: 3px 7px !important;
+      font-size: 13px !important;
+      font-weight: 650 !important;
+      font-family: "Segoe UI", Roboto, system-ui, sans-serif !important;
+      background: linear-gradient(45deg, #E2574C, #2EAD33) !important;
+      color: #fff !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.15) !important;
+      z-index: 999999999999999999999999999999999999999999999999999999999999 !important;
+      pointer-events: none !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.5) !important;
+    }
+  `;
+
+  const injectScript = ({ name, css }) => {
+    if (window.__PROFILE_BADGE_INJECTED__) return;
+    window.__PROFILE_BADGE_INJECTED__ = true;
+
+    const createBadge = () => {
+      let badge = document.getElementById('__profile-badge');
+      if (!badge) {
+        // Inject style
+        if (!document.getElementById('__profile-badge-style')) {
+          const style = document.createElement('style');
+          style.id = '__profile-badge-style';
+          style.textContent = css;
+          document.head.appendChild(style);
+        }
+
+        // Create badge
+        badge = document.createElement('div');
+        badge.id = '__profile-badge';
+        badge.dataset.injected = 'true';
+        badge.className = '__profile-badge';
+        badge.textContent = `${name}`;
+        document.body.appendChild(badge);
+      }
+    };
+
+    // Chạy ngay
+    const run = () => requestAnimationFrame(createBadge);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', run);
+    } else {
+      run();
+    }
+  };
+
+  // Inject cho tất cả page mới tạo
+  await context.addInitScript(injectScript, { name: profileName, css });
+
+  // Inject cho page hiện tại
+  // await page.evaluate(injectScript, { name: profileName, css });
 }
 
 module.exports = {

@@ -5,9 +5,14 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Grow from '@mui/material/Grow';
 import { X } from 'lucide-react';
+import Slide from '@mui/material/Slide';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Grow timeout={5000} ref={ref} {...props} />;
+});
+
+const TransitionFade = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
 });
 
 Modal.propTypes = {
@@ -20,22 +25,44 @@ Modal.propTypes = {
 }
 
 export default function Modal({
-  isOpen, onClose, size = 'md', title, content, width, height, ...other }) {
+  isOpen,
+  onClose,
+  transition = 'default',
+  divider = false,
+  hideBackdrop = false,
+  esc = false,
+  size = 'md',
+  title,
+  content,
+  width,
+  minWidth,
+  minHeight,
+  height,
+  zIndex = 1300,
+  scroll = 'body',
+  ...other
+}) {
 
   return (
     <Dialog
       {...other}
-      scroll='body'
+      scroll={scroll}
+      disableEnforceFocus
+      hideBackdrop={hideBackdrop}         // 👈 tắt nền mờ
+      disableEscapeKeyDown={esc} // (tùy chọn) không tự đóng khi bấm Esc
+      sx={{
+        pointerEvents: hideBackdrop && 'none', // container không nhận click
+        zIndex,
+      }}
       // {...other}
       open={isOpen}
       onClose={onClose}
-      disableEnforceFocus
-      TransitionComponent={Transition}
+      TransitionComponent={transition === 'default' ? Transition : TransitionFade}
       maxWidth={size}
       BackdropProps={{
-        style: {
-          // backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        },
+        // style: {
+        //   backgroundColor: !backdrop ? 'rgba(0, 0, 0, 0)' : '',
+        // },
       }}
       PaperProps={{
         style: {
@@ -51,6 +78,7 @@ export default function Modal({
         sx={{
           letterSpacing: '0.05em',
           fontSize: 18,
+          pointerEvents: hideBackdrop && 'auto', // nhận click
           height: 65
         }}
       >
@@ -59,10 +87,15 @@ export default function Modal({
         </span>
         <X className='x-modal' onClick={onClose} size={'22px'} />
       </DialogTitle>
+      {divider && <div style={{ borderBottom: '1px solid #404040' }} />}
       <DialogContent className='color-white' sx={{
+        pointerEvents: hideBackdrop && 'auto', // nhận click
         width,
+        minWidth,
+        minHeight,
         height,
         overflowY: 'hidden',
+        // overflowX: 'auto',
       }}>
         {content}
       </DialogContent>

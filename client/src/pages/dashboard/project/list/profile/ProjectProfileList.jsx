@@ -7,8 +7,8 @@ import useTable from '@/hooks/useTable';
 import { delayApi } from '@/utils/commonUtil';
 import ProjectProfileFilterSearch from './ProjectProfileFilterSearch';
 import ProjectProfileDataTable from './ProjectProfileDataTable';
-import { ButtonDanger, ButtonInfo, ButtonOrange, ButtonOutlinePrimary, ButtonPrimary } from '@/components/Button';
-import { ClipboardPlus, LogIn, LogOut, UserMinus, UserPlus, UserRoundMinus, UserRoundPlus } from 'lucide-react';
+import { ButtonInfo, ButtonOrange } from '@/components/Button';
+import { LogIn, LogOut } from 'lucide-react';
 import { StatusCommon } from '@/enums/enum';
 import useConfirm from '@/hooks/useConfirm';
 
@@ -23,7 +23,8 @@ export default function ProjectProfileList({ project = {} }) {
   const { onSuccess, onError } = useMessage();
 
   const [search, setSearch] = useState('');
-  const [selectedTab, setSelectedTab] = useState(StatusCommon.IN_ACTIVE);
+  const [selectedTab, setSelectedTab] = useState('joined');
+  const [selectedStatusTab, setSelectedStatusTab] = useState(StatusCommon.IN_ACTIVE);
 
   const isTabFree = selectedTab === 'free';
 
@@ -41,7 +42,7 @@ export default function ProjectProfileList({ project = {} }) {
       page,
       search,
       resources: project?.resources || [],
-      selectedTab,
+      selectedTab: selectedStatusTab,
     }
 
     try {
@@ -116,7 +117,7 @@ export default function ProjectProfileList({ project = {} }) {
 
     const idsByProject = async () => {
       const params = {
-        selectedTab,
+        selectedTab: selectedStatusTab,
       }
 
       try {
@@ -165,11 +166,7 @@ export default function ProjectProfileList({ project = {} }) {
     else {
       idsByProject();
     }
-  }, [selectedTab])
-
-  useEffect(() => {
-    console.log(selected)
-  }, [selected])
+  }, [selectedStatusTab, selectedTab])
 
   const joinProfiles = async () => {
     const params = {
@@ -249,28 +246,21 @@ export default function ProjectProfileList({ project = {} }) {
     search,
     page,
     selectedTab,
+    selectedStatusTab,
     selected,
   ]);
 
   const handleDeleteData = useCallback((id, onTrigger = () => { }) => {
-    if (isTabFree) {
-      fetchApiByResources(true, () => {
-        const newSelected = selected.filter(selected => selected !== id);
-        setSelected(newSelected);
-        onTrigger();
-      })
-    }
-    else {
-      fetchApiByProject(true, () => {
-        const newSelected = selected.filter(selected => selected !== id);
-        setSelected(newSelected);
-        onTrigger();
-      })
-    }
+    fetchApiByProject(true, () => {
+      const newSelected = selected.filter(selected => selected !== id);
+      setSelected(newSelected);
+      onTrigger();
+    })
   }, [
     search,
     page,
     selectedTab,
+    selectedStatusTab,
     selected,
   ]);
 
@@ -293,6 +283,15 @@ export default function ProjectProfileList({ project = {} }) {
 
   const handleChangeSelectedTab = (selected) => {
     setSelectedTab(selected);
+    if (selected === 'joined') {
+      setSelectedStatusTab(StatusCommon.IN_ACTIVE)
+    }
+    onChangePage(1);
+    setSelected([]);
+  };
+
+  const handleChangeSelectedStatusTab = (selected) => {
+    setSelectedStatusTab(selected);
     onChangePage(1);
     setSelected([]);
   };
@@ -312,19 +311,28 @@ export default function ProjectProfileList({ project = {} }) {
   }, [
     search,
     selectedTab,
+    selectedStatusTab,
     page,
   ])
 
   return (
     <div className='overflow-hidden'>
       <ProjectProfileFilterSearch
-        action={selected?.length > 0 && (isTabFree ?
+        action={(pagination?.isTabFree ?
           <ButtonInfo
+            style={{
+              opacity: selected.length > 0 ? '' : '0.5',
+              pointerEvents: selected.length > 0 ? '' : 'none',
+            }}
             icon={<LogIn />}
             title={`Tham gia`}
             onClick={joinProfiles}
           /> :
           <ButtonOrange
+            style={{
+              opacity: selected.length > 0 ? '' : '0.5',
+              pointerEvents: selected.length > 0 ? '' : 'none',
+            }}
             icon={<LogOut />}
             title={`Rời`}
             onClick={outProfiles}
@@ -341,6 +349,9 @@ export default function ProjectProfileList({ project = {} }) {
 
         onChangeSelectedTab={handleChangeSelectedTab}
         selectedTab={selectedTab}
+
+        onChangeSelectedStatusTab={handleChangeSelectedStatusTab}
+        selectedStatusTab={selectedStatusTab}
       />
 
       <ProjectProfileDataTableMemo

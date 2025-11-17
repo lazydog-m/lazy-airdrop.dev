@@ -1,15 +1,13 @@
 import { ButtonIcon, ButtonInfo, ButtonOutlinePrimary, ButtonPrimary } from "@/components/Button";
 import DropdownUi from "@/components/DropdownUi";
 import { Badge } from "@/components/ui/badge";
-import { Color, DailyTaskRefresh, StatusCommon } from "@/enums/enum";
+import { Color, DailyTaskRefresh, StatusCommon, TaskType } from "@/enums/enum";
 import { convertProjectTaskTypeEnumToText, darkenColor, lightenColor } from "@/utils/convertUtil";
-import { CheckCheck, CirclePlay, Clipboard, ClipboardClock, ClipboardList, ClipboardPen, Clock, Ellipsis, FileSymlink, Star, ToggleLeft, ToggleRight, Trash2, UserRoundCheck, } from "lucide-react";
+import { Calendar1, CircleUserRound, ClipboardClock, ClipboardPen, Ellipsis, FileSymlink, Fingerprint, Globe, Goal, Star, ToggleLeft, ToggleRight, Trash2, UserCircle2, UserRoundCheck, UserRoundPlus, } from "lucide-react";
 import React, { useState } from "react";
 import { RiTodoLine } from "react-icons/ri";
 import { GrSchedulePlay } from "react-icons/gr";
-import { TbClockCheck } from "react-icons/tb";
 import { Progress } from "@/components/ui/progress";
-import TablePagination from "@/components/TablePagination";
 import { BadgePrimary, BadgePrimaryOutline, BadgeWhite } from "@/components/Badge";
 import EmptyData from "@/components/EmptyData";
 import useSpinner from "@/hooks/useSpinner";
@@ -21,14 +19,13 @@ import { apiDelete, apiPut } from "@/utils/axios";
 import { Link } from "react-router-dom";
 import { PATH_DASHBOARD } from "@/routes/path";
 import TaskProfileList from "../task-profile/TaskProfileList";
+import { formatDateVN } from "@/utils/formatDate";
+import { formatNumberVN } from "@/utils/commonUtil";
 
 export default function ProjectTaskDataTable({
   data = [],
-  pagination,
-  onChangePage,
   onUpdateData,
   onDeleteData,
-
   projectId,
   projectName,
   projectDailyTaskRefresh,
@@ -105,6 +102,14 @@ export default function ProjectTaskDataTable({
     }
   }
 
+  const taskHasTime = (type) => {
+    if (type === TaskType.AIRDROP || type === TaskType.DAILY || type === TaskType.OFF_CHAIN || type === TaskType.POINTS) {
+      return true;
+    }
+
+    return false;
+  }
+
   const rows = React.useMemo(() => {
     return data?.map((row) => (
       <div className="project-task-item font-inter pdi-20 border-1 flex flex-col justify-between"
@@ -113,10 +118,11 @@ export default function ProjectTaskDataTable({
       >
 
         <div className="project-task-header d-flex justify-between items-center mt-2">
-          <span className=" txt-underline text-capitalize d-flex fw-500 fs-18 items-center gap-6">
-            <RiTodoLine size={'19px'} />
+          <span className="text-capitalize txt-underline  d-flex fw-500 fs-18 items-center gap-6">
+            <TaskIcon type={row?.type} />
+            {/* <RiTodoLine size={'20px'} /> */}
             <Link to={row?.url || '/404'} target='_blank' rel="noopener noreferrer">
-              <span className="text-too-long-280">
+              <span className="text-too-long-330 txt-underline">
                 {row?.name}
               </span>
             </Link>
@@ -192,7 +198,7 @@ export default function ProjectTaskDataTable({
         <div className="project-task-badge d-flex gap-6 mt-20">
           {row?.points &&
             <BadgePrimaryOutline>
-              {`${row?.points} Points`}
+              {`${formatNumberVN(row?.points)} Points`}
             </BadgePrimaryOutline>
           }
           {row?.script_name ?
@@ -223,7 +229,7 @@ export default function ProjectTaskDataTable({
             </div>
           </div>
           <Progress
-            className="progress mt-5
+            className="task-progress mt-5
             [&>div]:bg-gradient-to-r
             [&>div]:from-[#E2574C]
             [&>div]:via-[#C36648]
@@ -235,24 +241,71 @@ export default function ProjectTaskDataTable({
           />
         </div>
 
-        <div className="project-task-footer d-flex justify-between mb-3 items-center mt-15">
-          <Badge className='custom-badge bdr select-none'
-            style={{
-              backgroundColor: `${darkenColor(projectDailyTaskRefresh === DailyTaskRefresh.COUNT_DOWN_TIME_IT_UP ? Color.WARNING : projectDailyTaskRefresh === DailyTaskRefresh.UTC0 ? Color.PRIMARY : Color.SECONDARY)}`,
-              borderColor: `${lightenColor(projectDailyTaskRefresh === DailyTaskRefresh.COUNT_DOWN_TIME_IT_UP ? Color.WARNING : projectDailyTaskRefresh === DailyTaskRefresh.UTC0 ? Color.PRIMARY : Color.SECONDARY)}`,
-              color: 'white',
-            }}
-          >
-            <span className="d-flex gap-1">
-              <ClipboardClock size={"14px"} className='mt-1' />
-              {`10'`}
-            </span>
-          </Badge>
+        <div className={`project-task-footer d-flex justify-between mb-3 items-center mt-15`}>
+          {/* {row?.type === TaskType.LOGIN && */}
+          {/*   <Badge className={'badge-default'}> */}
+          {/*     <span className="text-gray flex fs-13 gap-1"> */}
+          {/*       <Calendar size={"14px"} className='mt-0' /> */}
+          {/*       {new Date().toLocaleDateString('vi-VN')} */}
+          {/*     </span> */}
+          {/*   </Badge> */}
+          {/* } */}
+          {taskHasTime(row?.type) ?
+            (row?.type === TaskType.DAILY ?
+              <Badge className='custom-badge bdr select-none'
+                style={{
+                  backgroundColor: `${darkenColor(projectDailyTaskRefresh === DailyTaskRefresh.COUNT_DOWN_TIME_IT_UP ? Color.WARNING : projectDailyTaskRefresh === DailyTaskRefresh.UTC0 ? Color.PRIMARY : Color.SECONDARY)}`,
+                  borderColor: `${lightenColor(projectDailyTaskRefresh === DailyTaskRefresh.COUNT_DOWN_TIME_IT_UP ? Color.WARNING : projectDailyTaskRefresh === DailyTaskRefresh.UTC0 ? Color.PRIMARY : Color.SECONDARY)}`,
+                  color: 'white',
+                }}
+              >
+                <span className="d-flex gap-1">
+                  <ClipboardClock size={"15.5px"} className='mt-0' />
+                  {`10'`}
+                </span>
+              </Badge> :
+              <Badge className='badge-default bdr select-none'
+              >
+                <span className="d-flex gap-6 text-gray">
+                  <Calendar1 size={"15.5px"} className='mt-0' />
+                  {'No due date'}
+                </span>
+              </Badge>
+            ) : row?.type === TaskType.REG ?
+              <Badge className='badge-default bdr gap-1 items-center select-none'
+                style={{
+                  backgroundColor: `${darkenColor(Color.SECONDARY)}`,
+                  borderColor: `${lightenColor(Color.SECONDARY)}`,
+                  color: 'white',
+                }}
+              >
+                <span className='flex gap-6'>
+                  <Fingerprint size={'15.5px'} className='mt-0' />
+                  +5
+                </span>
+              </Badge> :
+              <Badge className='badge-default bdr gap-1 items-center select-none'
+                style={{
+                  backgroundColor: `${darkenColor(Color.ORANGE)}`,
+                  borderColor: `${lightenColor(Color.ORANGE)}`,
+                  color: 'white',
+                }}
+              >
+                <span className='flex gap-6'>
+                  <UserCircle2 size={'15.5px'} className='mt-0' />
+                  {`50 - Last Login ${new Date().toLocaleDateString('vi-VN')}`}
+                </span>
+              </Badge>
+          }
 
           <div className="d-flex">
             <ButtonOutlinePrimary
               className='button-outline-primary color-white select-none font-inter pointer h-31 fs-13 d-flex'
-              title={'Làm'}
+              title={
+                <span className="text-too-long-100 text-capitalize">
+                  {row?.name}
+                </span>
+              }
               icon={<GrSchedulePlay className="size-4.5" />}
               onClick={() => handleClickOpenProfiles(row)}
             />
@@ -266,20 +319,24 @@ export default function ProjectTaskDataTable({
   return (
     <>
       {rows?.length > 0 ?
-        <div className="project-task-container gap-20 scroll-smooth grid grid-cols-3">
+        <div
+          className="project-task-container gap-20 scroll-smooth grid grid-cols-3 mt-20 pe-20"
+          style={{ scrollbarGutter: "stable" }}
+        >
           {rows}
+          <div className="h-[0px] col-span-3"></div>
         </div>
         :
         <div className="mt-20">
           <EmptyData table={false} />
         </div>
       }
-      <TablePagination
-        checkbox={false}
-        selectedObjText='task'
-        onChangePage={onChangePage}
-        pagination={pagination}
-      />
+      {/* <TablePagination */}
+      {/*   checkbox={false} */}
+      {/*   selectedObjText='task' */}
+      {/*   onChangePage={onChangePage} */}
+      {/*   pagination={pagination} */}
+      {/* /> */}
 
       <Modal
         height={'800px'}
@@ -292,13 +349,12 @@ export default function ProjectTaskDataTable({
             <span className="text-too-long-480">
               {`${task?.name}`}
             </span>
-            {` - ${convertProjectTaskTypeEnumToText(task?.type) || ''} - ${projectName}`} {task?.points && `(+${task?.points} Points)`}
+            {` - ${convertProjectTaskTypeEnumToText(task?.type) || ''} - ${projectName}`} {task?.points && `(+${formatNumberVN(task?.points)} Points)`}
           </span>
         }
         content={
           <TaskProfileList
             projectId={projectId}
-            projectName={projectName}
             task={task}
           />
         }
@@ -348,4 +404,25 @@ const MoreItem = ({ title, icon, path, capitalize = false }) => {
       {icon}
     </div>
   )
+}
+
+const TaskIcon = ({ type }) => {
+  if (type === TaskType.REG) {
+    return <UserRoundPlus size={20} />
+  }
+  if (type === TaskType.LOGIN) {
+    return <CircleUserRound size={20} />
+  }
+  if (type === TaskType.DAILY) {
+    return <ClipboardClock size={20} />
+  }
+  if (type === TaskType.POINTS) {
+    return <RiTodoLine size={20} />
+  }
+  if (type === TaskType.OFF_CHAIN) {
+    return <Globe size={20} />
+  }
+  if (type === TaskType.AIRDROP) {
+    return <Goal size={21} />
+  }
 }

@@ -23,12 +23,14 @@ const rootStyle = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  backgroundColor: "rgba(0, 0, 0, 0.7)",
+  // backgroundColor: "rgba(0, 0, 0, 0.7)",
   zIndex: 99999,
+  pointerEvents: 'none'
 }
 
 function SpinnerProvider({ children }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isInitial, setIsInitial] = useState(false);
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -46,16 +48,54 @@ function SpinnerProvider({ children }) {
         isLoading: isOpen,
       }}
     >
+      {/* {isOpen && */}
+      {/*   <div style={rootStyle} className='select-none'> */}
+      {/*     <div className="loader-wrapper"> */}
+      {/*       <div className="spinner"> */}
+      {/*         <div className="spinner-inner"></div> */}
+      {/*       </div> */}
+      {/*       <div className="logo"> */}
+      {/*         <img src={logo} style={{ width: '47px' }} /> */}
+      {/*       </div> */}
+      {/*     </div> */}
+      {/*   </div> */}
+      {/* } */}
       {isOpen &&
         <div style={rootStyle} className='select-none'>
-          <div className="loader-wrapper">
-            <div className="spinner">
-              <div className="spinner-inner"></div>
+          <div className="boxes">
+            <div className="box">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
             </div>
-            <div className="logo">
-              <img src={logo} style={{ width: '47px' }} />
+            <div className="box">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+            <div className="box">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
+            </div>
+            <div className="box">
+              <div></div>
+              <div></div>
+              <div></div>
+              <div></div>
             </div>
           </div>
+          {/* <div className={`loader-container`}> */}
+          {/*   <div className="loader"> */}
+          {/*     <div className="cube"></div> */}
+          {/*     <div className="cube"></div> */}
+          {/*     <div className="cube"></div> */}
+          {/*     <div className="cube"></div> */}
+          {/*   </div> */}
+          {/* </div> */}
         </div>
       }
       {children}

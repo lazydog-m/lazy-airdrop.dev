@@ -3,6 +3,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import { Color } from "@/enums/enum"
+import { darkenColor } from "@/utils/convertUtil"
+import { Badge } from "./ui/badge"
 
 export const TabsUi = ({
   tabs = [],
@@ -31,28 +34,29 @@ export const TabsUi = ({
               style={{
                 borderColor: selectedTab === tab?.value ? '#ffffff' : '#323230',
                 backgroundColor: selectedTab === tab?.value ? '#404040' : '#202020'
+                // backgroundColor: darkenColor(tab?.color),
               }}
             >
               <span className='gap-7 d-flex text-capitalize items-center'>
                 {tab?.icon}
-                {tab?.name} {tab?.notCount ? null : `(${tab?.total})`}
+                {tab?.name}
               </span>
-              {/* {!tab?.notCount && */}
-              {/*   <svg width={24.5} height="24"> */}
-              {/*     <circle cx="12" cy="12" r="10" fill={tab?.color ? darkenColor(tab?.color, 0.2) : 'white'} /> */}
-              {/*     <text */}
-              {/*       x="50%" */}
-              {/*       y="50%" */}
-              {/*       textAnchor="middle" */}
-              {/*       dominantBaseline="middle" */}
-              {/*       fill={tab?.color ? 'white' : 'black'} */}
-              {/*       fontSize={13} */}
-              {/*       fontWeight='700' */}
-              {/*     > */}
-              {/*       {tab?.total || 0} */}
-              {/*     </text> */}
-              {/*   </svg> */}
-              {/* } */}
+              {!tab?.notCount &&
+                <svg width="24.5" height="24">
+                  <circle cx="12" cy="12" r="10" fill={tab?.color ? darkenColor(tab?.color, 0.2) : 'white'} />
+                  <text
+                    x="50%"
+                    y="50%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fill={tab?.color ? 'white' : 'black'}
+                    fontSize={tab?.total > 9 ? 10 : 13}
+                    fontWeight='700'
+                  >
+                    {tab?.total || 0}
+                  </text>
+                </svg>
+              }
             </TabsTrigger>
           ))}
         </TabsList>

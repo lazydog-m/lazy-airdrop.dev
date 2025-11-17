@@ -124,8 +124,8 @@ const getAllTasksByProjectId = async (req) => {
   END ASC,
   t.order_star ASC,
   t.createdAt DESC
-    LIMIT 6 OFFSET ${offset}
   `;
+  // LIMIT 6 OFFSET ${offset}
   // AND w.status = :status 
   const data = await sequelize.query(query, {
     replacements: {

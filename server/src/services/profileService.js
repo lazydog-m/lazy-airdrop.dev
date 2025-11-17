@@ -540,7 +540,7 @@ const sortProfileLayouts = async () => {
 }
 
 const openProfilesByIds = async (req) => {
-  const { ids, url } = req.query;
+  const { ids, url, scale } = req.query;
 
   //1 2 3 4     // 1 2 dang mo ko lay => lay 3,4 chua dc mo
   const filteredIds = ids?.filter((id) => !currentProfiles().includes(id));
@@ -565,7 +565,7 @@ const openProfilesByIds = async (req) => {
       // Chạy song song profile  // Bỏ promise sẽ chạy lần lượt
       const promise = new Promise(async (resolve, reject) => {
         try {
-          const { context, page, chrome } = await openProfile({ profile, port });
+          const { context, page, chrome } = await openProfile({ profile, port, activate: true, scale });
           addBrowser({ context, page, chrome, profile, port });
 
           if (url) {
@@ -582,9 +582,8 @@ const openProfilesByIds = async (req) => {
       });
       promises.push(promise);
     }
-
     await Promise.all(promises);
-    await sortGridLayout(browsers);
+    // await sortGridLayout();
 
     return filteredIds;
   }

@@ -14,7 +14,6 @@ import { Chrome, CirclePlay, Code, Loader, Logs, Save } from 'lucide-react';
 import Modal from '@/components/Modal';
 import ScriptNewEditForm from './ScriptNewEditForm';
 import useMessage from '@/hooks/useMessage';
-import { Drawer } from 'antd';
 import { Badge } from '@/components/ui/badge';
 import ScriptPreviewCode from './ScriptPreviewCode';
 import ScriptLogs from './ScriptLogs';
@@ -329,7 +328,7 @@ export default function ScriptNewEdit() {
               <ButtonOutline
                 icon={<Logs />}
                 title='Logs'
-                onClick={() => setOpenLogs(true)}
+                onClick={() => setOpenLogs(prev => !prev)}
               />
               {data?.logicItems?.length > 0 &&
                 <ButtonOutline
@@ -347,28 +346,28 @@ export default function ScriptNewEdit() {
           }
         />
 
-        <Drawer
-          className='drawer-run-test'
-          title={
-            <div className='h-5'>
-              <span className='fw-500 color-white font-inter'>Logs</span>
-              <UnderlineHeader className='mt-10' />
-            </div>
-          }
-          placement="right"
-          width={700}
-          closable={false}
-          onClose={() => setOpenLogs(false)}
-          open={openLogs}
-          contentWrapperStyle={{ boxShadow: 'none' }}
-        // maskClosable={!loadingScript}
-        // keyboard={!loadingScript}
-        // getContainer={false}
-        >
-          <div className='mb-10'>
-            <ScriptLogs logs={logs || []} />
-          </div>
-        </Drawer>
+        {/* <Drawer */}
+        {/*   className='drawer-run-test' */}
+        {/*   title={ */}
+        {/*     <div className='h-5'> */}
+        {/*       <span className='fw-500 color-white font-inter'>Logs</span> */}
+        {/*       <UnderlineHeader className='mt-10' /> */}
+        {/*     </div> */}
+        {/*   } */}
+        {/*   placement="right" */}
+        {/*   width={700} */}
+        {/*   closable={false} */}
+        {/*   onClose={() => setOpenLogs(false)} */}
+        {/*   open={openLogs} */}
+        {/*   contentWrapperStyle={{ boxShadow: 'none' }} */}
+        {/* // maskClosable={!loadingScript} */}
+        {/* // keyboard={!loadingScript} */}
+        {/* // getContainer={false} */}
+        {/* > */}
+        {/*   <div className='mb-10'> */}
+        {/*     <ScriptLogs logs={logs || []} /> */}
+        {/*   </div> */}
+        {/* </Drawer> */}
 
         <Modal
           keepMounted
@@ -402,6 +401,25 @@ export default function ScriptNewEdit() {
             <div>
               <ScriptPreviewCode currentScript={data} />
             </div>
+          }
+        />
+
+        <Modal
+          style={{ marginLeft: '125px', marginTop: '500px' }}
+          transition='slide'
+          divider
+          scroll='paper'
+          hideBackdrop={true}
+          zIndex={1299}
+          esc={true}
+          size='lg'
+          width={750}
+          height={300}
+          isOpen={openLogs}
+          onClose={() => setOpenLogs(false)}
+          title={"Logs"}
+          content={
+            <ScriptLogs logs={logs || []} />
           }
         />
       </Container>

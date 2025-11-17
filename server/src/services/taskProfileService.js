@@ -8,8 +8,9 @@ const TaskProfile = require('../models/taskProfile');
 const sequelize = require('../configs/dbConnection');
 const { Pagination, StatusCommon, WEB3_WALLET_RESOURCE_IDS } = require('../enums');
 const { convertArr } = require('../utils/convertUtil');
-const { currentProfiles, getPortFree, addBrowser, openProfile } = require('../utils/playwrightUtil');
+const { currentProfiles, getPortFree, addBrowser, openProfile, getBrowsers, delay } = require('../utils/playwrightUtil');
 const { getProfileById } = require('./profileService');
+const { getAllIdsByProject } = require('./projectProfileService');
 
 const taskProfileSchema = Joi.object({
   task_id: Joi.string().trim().required().max(36).messages({
@@ -178,88 +179,81 @@ const getAllProfilesByProjectTask = async (req) => {
       // totalItemsUnActive: totalUnActive,
       // totalItemsFree: totalFree,
       totalPages,
-      // isTabFree: false,
+      type: selectedTab,
       hasNext: currentPage < totalPages,
       hasPre: currentPage > 1
     }
   };
 }
 
-const countByProjectUnActive = async (projectId = '') => {
+const runTaskProfiles = async (req) => {
+  const { projectId } = req.params;
+  const profiles = await getAll(projectId)
 
-  let whereClause = `
-     WHERE pp.project_id = '${projectId}' AND pp.status = '${StatusCommon.UN_ACTIVE}'
-`;
+  console.log(profiles);
 
-  const countQuery = `
-  SELECT COUNT(*) AS total FROM (
-    SELECT pp.id
-    FROM 
-      project_profiles pp
-    JOIN profiles p ON p.id = pp.profile_id AND p.deletedAt IS NULL AND p.status = '${StatusCommon.IN_ACTIVE}'
-    ${whereClause}
-  ) AS subquery
-   `;
+  const promises = [];
 
-  const countResult = await sequelize.query(countQuery, {
-    type: QueryTypes.SELECT
-  });
+  for (let i = 0; i < profiles.length; i++) {
+    const profile = profiles[i];
+    const port = getPortFree();
 
-  const total = countResult[0]?.total;
-  return total;
+    // Chạy song song profile  // Bỏ promise sẽ chạy lần lượt
+    const promise = new Promise(async (resolve, reject) => {
+      try {
+        const { context, page, chrome } = await openProfile({ profile, port, activate: true });
+        addBrowser({ context, page, chrome, profile, port });
+
+        resolve();
+      } catch (err) {
+        reject(err); // 1 reject sẽ failed all promises => not return ids
+      }
+    });
+    promises.push(promise);
+  }
+  await Promise.all(promises);
+  // await sortGridLayout();
+
+  console.log(getBrowsers())
+  const automationPromises = getBrowsers().map(({ page, context, chrome }, i) =>
+    delay(i * 5000).then(async () => {
+      await page.goto('https://example.com1/');
+      await page.waitForTimeout(5000);
+      await page.click('text=Learn more');
+      await page.waitForTimeout(5000);
+      await page.click('text=IANA-managed Reserved Domains');
+      await page.waitForTimeout(5000);
+      await page.click('text=Special-Use Domain Names');
+      await page.waitForTimeout(5000);
+      await chrome.kill();
+    })
+  );
+
+  await Promise.all(automationPromises);
+  console.log('done')
+
 }
 
-const countByProject = async (projectId = '') => {
-
+const getAll = async (projectId = '') => {
   let whereClause = `
      WHERE pp.project_id = '${projectId}' AND pp.status = '${StatusCommon.IN_ACTIVE}'
 `;
 
-  const countQuery = `
-  SELECT COUNT(*) AS total FROM (
-    SELECT pp.id
-    FROM 
-      project_profiles pp
-    JOIN profiles p ON p.id = pp.profile_id AND p.deletedAt IS NULL AND p.status = '${StatusCommon.IN_ACTIVE}'
-    ${whereClause}
-  ) AS subquery
-   `;
-
-  const countResult = await sequelize.query(countQuery, {
-    type: QueryTypes.SELECT
-  });
-
-  const total = countResult[0]?.total;
-  return total;
-}
-
-const getAllIdsByProject = async (req) => {
-  const {
-    projectId
-  } = req.params;
-
-  const {
-    selectedTab,
-  } = req.query;
-
-  let whereClause = `
-     WHERE pp.project_id = '${projectId}' AND pp.status = '${selectedTab}'
-`;
-
   const query = `
-    SELECT pp.id
+    SELECT pp.id as pp_id, p.id, p.email as name
     FROM 
       project_profiles pp
     JOIN profiles p ON p.id = pp.profile_id AND p.deletedAt IS NULL AND p.status = '${StatusCommon.IN_ACTIVE}'
     ${whereClause}
+    LIMIT 1
    `;
 
   const data = await sequelize.query(query, {
     type: QueryTypes.SELECT
   });
 
-  const convertedData = data?.map(item => item.id);
-  return convertedData;
+  // const convertedData = data?.map(item => item.id);
+  return data;
 }
 
 const createTaskProfile = async (body) => {
@@ -448,6 +442,7 @@ module.exports = {
   // getAllIdsByProject,
   // getProfileWalletById,
   createTaskProfile,
+  runTaskProfiles,
   // createProjectProfiles,
   // updateProjectProfileStatus,
   // deleteProjectProfile,

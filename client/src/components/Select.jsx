@@ -14,6 +14,7 @@ export default function Select({
   items = [],
   disabled,
   convertItem,
+  prefix,
   form = true,
   ...other
 }) {
@@ -21,9 +22,10 @@ export default function Select({
     <SelectMain
       onValueChange={onValueChange}
       value={value}
-      {...other}
     >
-      <SelectTrigger className={`
+      <SelectTrigger
+        {...other}
+        className={`
       ${form && 'mt-10'} select-none color-white font-inter fs-14 pointer bdr select-main
             transition-all duration-200 ease-in-out
             focus-within:ring-neutral-500
@@ -39,7 +41,7 @@ export default function Select({
             return (
               <SelectItem disabled={disabled} value={item} className='pointer bdr select-item' style={{ height: '35px' }}>
                 <span className="text-capitalize font-inter">
-                  {convertItem ? convertItem(item) : item}
+                  {prefix} {convertItem ? convertItem(item) : item}
                 </span>
               </SelectItem>
             )

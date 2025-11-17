@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Input } from "@/components/ui/input";
-import { ListFilter, UserLock, UserRoundCheck, UserRoundMinus, UserRoundSearch, UserRoundX, Users } from 'lucide-react';
+import { ListFilter, UserRoundCheck, UserRoundMinus, UserRoundX, Users } from 'lucide-react';
 import { ButtonGhost } from '@/components/Button';
 import { Color, StatusCommon } from '@/enums/enum';
 import useDebounce from '@/hooks/useDebounce';
-import { TabsUi } from '@/components/TabsUi';
-import TooltipUi from '@/components/TooltipUi';
+import { TabsUi, TabsUi1 } from '@/components/TabsUi';
 import InputUi from '@/components/InputUi';
-import { LiaUserLockSolid } from "react-icons/lia";
 import { convertStatusCommonEnumToText } from '@/utils/convertUtil';
+import { formatNumberVN } from '@/utils/commonUtil';
 
 export default function ProjectProfileFilterSearch({
   selectedTab,
   onChangeSelectedTab = () => { },
 
+  selectedStatusTab,
+  onChangeSelectedStatusTab = () => { },
+
   onClearAllSelectedItems = () => { },
 
   onChangeSearch = () => { },
-  search = '',
 
+  search,
   action = {},
   pagination = {},
-  projectName = '',
 }) {
 
   const [filterSearch, setFilterSearch] = useState('');
@@ -32,20 +32,27 @@ export default function ProjectProfileFilterSearch({
     onChangeSearch(debounceValue);
   }, [debounceValue]);
 
-  const [filterTab, setFilterTab] = useState(selectedTab);
-
-  const debounce = useDebounce(filterTab, 50);
-
-  useEffect(() => {
-    onChangeSelectedTab(debounce);
-  }, [debounce]);
-
   const clearAll = () => {
     onClearAllSelectedItems();
     setFilterSearch('');
   }
 
   const tabs = [
+    {
+      name: `Đã tham gia`,
+      value: 'joined',
+      icon: <Users size={17} />,
+      total: (pagination?.totalItemsUnActive + pagination?.totalItemsActive) || 0,
+    },
+    {
+      name: `Chưa tham gia`,
+      value: "free",
+      total: pagination?.totalItemsFree || 0,
+      icon: <UserRoundMinus size={17} />,
+    },
+  ];
+
+  const statusTabs = [
     {
       name: convertStatusCommonEnumToText(StatusCommon.IN_ACTIVE),
       value: StatusCommon.IN_ACTIVE,
@@ -56,13 +63,7 @@ export default function ProjectProfileFilterSearch({
       name: convertStatusCommonEnumToText(StatusCommon.UN_ACTIVE),
       value: StatusCommon.UN_ACTIVE,
       total: pagination?.totalItemsUnActive || 0,
-      icon: <UserRoundX size={17} />
-    },
-    {
-      name: `Chưa tham gia`,
-      value: "free",
-      total: pagination?.totalItemsFree || 0,
-      icon: <UserRoundMinus size={17} />
+      icon: <UserRoundX size={17} />,
     },
   ];
 
@@ -72,9 +73,19 @@ export default function ProjectProfileFilterSearch({
         <div className="d-flex gap-10 items-center">
           <TabsUi
             tabs={tabs}
-            selectedTab={filterTab}
-            onChangeTab={(value) => setFilterTab(value)}
+            selectedTab={selectedTab}
+            onChangeTab={(value) => onChangeSelectedTab(value)}
           />
+          <div
+            className='
+                items-center border-none inline-flex select-none gap-0 h-40 bg-color-light pdi-15 border-primary-2
+                '
+          >
+            <div className='fs-13 fw-500 flex gap-6'>
+              <Users size={17} />
+              {`${formatNumberVN(100000)} Points`}
+            </div>
+          </div>
           <InputUi
             placeholder='Tìm kiếm profiles ...'
             style={{ width: '250px' }}
@@ -90,20 +101,20 @@ export default function ProjectProfileFilterSearch({
           }
         </div>
         <div className='d-flex items-center gap-10'>
-          <div
-            className='me-2
-                items-center border-none inline-flex select-none gap-0 h-40 bg-color-light pdi-15 border-primary-2
-                '
-          >
-            <div className='fs-13 fw-500 flex gap-1'>
-              <Users size={18} />
-              {`100 - 100,000 Points`}
-            </div>
-          </div>
           {action}
         </div>
       </div>
-
+      {!pagination?.isTabFree &&
+        <div className="d-flex justify-content-between align-items-center gap-20 mt-0.5">
+          <div className="filter-search d-flex gap-10 items-center">
+            <TabsUi1
+              tabs={statusTabs}
+              selectedTab={selectedStatusTab}
+              onChangeTab={(value) => onChangeSelectedStatusTab(value)}
+            />
+          </div>
+        </div>
+      }
     </>
   )
 }

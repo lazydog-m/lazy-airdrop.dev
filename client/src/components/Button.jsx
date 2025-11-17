@@ -20,31 +20,34 @@ export const ButtonOutlineInfo = ({ icon, title, ...other }) => {
   )
 }
 
-// export const ButtonInfo = ({ icon, title, ...other }) => {
-//   return (
-//     <Button className='button-info select-none font-inter pointer h-40 fs-13 d-flex' {...other}>
-//       {icon} {title}
-//     </Button>
-//   )
-// }
-
 export const ButtonInfo = ({ icon, title, ...other }) => {
   return (
-    <Button
-      {...other}
-      className="
-        flex items-center justify-center
-        select-none font-inter pointer
-        px-3 fs-13 h-40
-        leading-none align-middle
-        button-info
-      "
-    >
-      <span className="flex items-center justify-center">{icon}</span>
-      <span className="relative top-[0.5px]">{title}</span>
+    <Button className='button-info px-3 items-center select-none font-inter pointer h-40 fs-13 d-flex' {...other}>
+      <span className="mb-1">
+        {icon}
+      </span>
+      {title}
     </Button>
   )
 }
+
+// export const ButtonInfo = ({ icon, title, ...other }) => {
+//   return (
+//     <Button
+//       {...other}
+//       className="
+//         flex items-center justify-center
+//         select-none font-inter pointer
+//         px-3 fs-13 h-40
+//         leading-none align-middle
+//         button-info
+//       "
+//     >
+//       <span className="flex items-center justify-center">{icon}</span>
+//       <span className="relative top-[0.5px]">{title}</span>
+//     </Button>
+//   )
+// }
 
 export const ButtonOutlinePrimary = ({ icon, title, ...other }) => {
   return (
@@ -70,17 +73,13 @@ export const ButtonOutlineOrange = ({ icon, title, ...other }) => {
 export const ButtonOrange = ({ icon, title, ...other }) => {
   return (
     <Button
+      className='font-inter button-orange px-3 select-none bdr pointer color-white h-40 fs-13 d-flex'
       {...other}
-      className="
-        flex items-center justify-center
-        select-none font-inter pointer
-        px-3 fs-13 h-40
-        leading-none align-middle
-        button-orange
-      "
     >
-      <span className="flex items-center justify-center">{icon}</span>
-      <span className="relative top-[0.5px]">{title}</span>
+      <span className="mb-1">
+        {icon}
+      </span>
+      {title}
     </Button>
   )
 }
@@ -106,15 +105,21 @@ export const ButtonOutline = ({ icon, title, isReverse, ...other }) => {
 
   if (isReverse) {
     return (
-      <Button className='button-outlined font-inter pointer color-white h-40 fs-13 d-flex align-items-center justify-content-center select-none' {...other}>
-        {title} {icon}
+      <Button className='button-outlined px-3 font-inter pointer color-white h-40 fs-13 d-flex align-items-center justify-content-center select-none' {...other}>
+        {title}
+        <span className="mb-1">
+          {icon}
+        </span>
       </Button>
     )
   }
 
   return (
-    <Button className='button-outlined font-inter pointer color-white h-40 fs-13 d-flex  align-items-center justify-content-center  select-none' {...other}>
-      {icon} {title}
+    <Button className='button-outlined px-3 font-inter pointer color-white h-40 fs-13 d-flex  align-items-center justify-content-center  select-none' {...other}>
+      <span className="mb-1">
+        {icon}
+      </span>
+      {title}
     </Button>
   )
 }
